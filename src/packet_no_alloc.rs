@@ -1,4 +1,4 @@
-//! Implement [Packet] with the alloc feature enabled
+//! Implement [Packet] with the alloc feature disabled
 
 use super::*;
 

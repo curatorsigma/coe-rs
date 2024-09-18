@@ -1,8 +1,5 @@
 #![cfg(test)]
 
-#[cfg(feature = "alloc")]
-use crate::Packet;
-
 use crate::*;
 
 #[test]
