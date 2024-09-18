@@ -31,6 +31,7 @@ mod tests;
 
 /// All the Errors that can appear when parsing a COE packet.
 #[derive(Debug, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub enum ParseCOEError {
     /// The Node value is not allowed (1-62)
     NodeDisallowed(u8),
@@ -113,6 +114,7 @@ impl std::error::Error for ParseCOEError {}
 /// A COE packet can have at most 255 bytes = 31 Payloads.
 /// This Error occurs, when the user tries to add another payload to a packet that is already full.
 #[derive(Debug, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub struct PacketMaxPayloadsExceeded {}
 impl alloc::fmt::Display for PacketMaxPayloadsExceeded {
     fn fmt(&self, f: &mut alloc::fmt::Formatter) -> alloc::fmt::Result {
@@ -133,6 +135,7 @@ impl std::error::Error for PacketMaxPayloadsExceeded {}
 /// The packet on wire contains 4 bytes of headers, leaving us with 251 usable bytes. A payload
 /// length of 8 byte per payload yields 31 full payloads that fit in the max packet length.
 #[derive(Debug, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub struct Packet {
     /// CoE Version used. Currently, only 2.0 is supported.
     version: COEVersion,
@@ -262,6 +265,7 @@ pub fn packets_from_payloads(payloads: &[Payload]) -> Vec<Packet> {
 
 /// The Version of COE protocol used.
 #[derive(Debug, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 struct COEVersion {
     /// The major CoE Version. Only 2 is supported.
     major: u8,
@@ -286,6 +290,7 @@ impl TryFrom<(u8, u8)> for COEVersion {
 /// NOTE: the pdo_index is offset by one to the representation in the GUI.
 /// We store the on-wire format here, without the +1 offset present in the GUIs.
 #[derive(Debug, PartialEq, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub struct Payload {
     /// The receiving CAN bus will create a virtual CAN node with this node number to send CAN
     /// messages onto the bus from.
@@ -361,7 +366,8 @@ impl Payload {
 }
 
 /// Any Value that is representable in COE.
-#[derive(Debug, PartialEq, Copy, Clone)]
+#[derive(Debug, PartialEq, Copy, Clone, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub enum COEValue {
     /// An `analogue` Value.
     ///
@@ -424,6 +430,7 @@ pub fn to_day_of_month(day: u8, month: u8) -> Option<AnalogueCOEValue> {
 
 /// The Errors that can occur when parsing an integer as day of month
 #[derive(Debug, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub enum FromDayOfMonthError {
     /// The supplied AnalogueCOEValue was not DayOfMonth
     NotDayOfMonth,
@@ -501,7 +508,8 @@ pub fn to_month_of_year(month: u8, year: u16) -> Option<AnalogueCOEValue> {
 }
 
 /// The Errors that can occur when parsing an integer as day of month
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub enum FromMonthOfYearError {
     /// The supplied AnalogueCOEValue was not MonthOfYear.
     NotMonthOfYear,
@@ -562,7 +570,8 @@ pub fn from_month_of_year(value: AnalogueCOEValue) -> Result<(u8, u16), FromMont
 // We allow non_camel_case_types here, so that we can better separate the comma position from the
 // actual content here (I think this is the cleaner naming scheme in this particular case)
 #[allow(non_camel_case_types)]
-#[derive(PartialEq, Clone, Copy, Debug)]
+#[derive(PartialEq, Eq, Clone, Copy, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub enum AnalogueCOEValue {
     Dimensionless(i32) = 0,
     DegreeCentigrade_Tens(i32) = 1,
@@ -1050,7 +1059,8 @@ impl AnalogueCOEValue {
 
 /// Representation of all existing digital values representable in COE
 #[repr(u8)]
-#[derive(PartialEq, Clone, Copy, Debug)]
+#[derive(PartialEq, Eq, Clone, Copy, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub enum DigitalCOEValue {
     OnOff(bool) = 43,
     YesNo(bool) = 44,

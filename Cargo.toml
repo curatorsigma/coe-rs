@@ -16,5 +16,8 @@ unsafe_code = "forbid"
 [features]
 default = ["std"]
 std = []
+serde = ["dep:serde"]
 
 [dependencies]
+serde = { version = "1.0.210", optional = true, default-features = false, features = ["derive", "alloc"] }
+
