@@ -22,7 +22,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-You can receive packets like this (but please add better Error handling for real-world applications):
+You can receive packets like this:
 ```rust
 async fn listener() -> Result<(), Box<dyn Error>> {
     let socket = UdpSocket::bind("0.0.0.0:5442").await?;
