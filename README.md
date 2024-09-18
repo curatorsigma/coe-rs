@@ -11,13 +11,16 @@ To use the protocol over a network, consider this minimal example:
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut test_packet = Packet::new();
-    // send to CAN-ID 58, at offset 1
+    // send to CAN-ID 58, at offset 1 (shows up as 2 in the GUI)
     test_packet.try_push(Payload::new(58, 1, coe::COEValue::Analogue(AnalogueCOEValue::LiterPerPulse_Tens(123))))?;
 
     let socket = UdpSocket::bind("0.0.0.0:34215").await?;
+    let mut buf = [0_u8; 252];
+    test_packet.try_serialize_into(&mut buf).expect("252 bytes is always large enough to fit a
+    CoE Packet");
     // connect to the IP of your CMI
     socket.connect("192.168.1.123:5442").await?;
-    socket.send(&Into::<Vec<u8>>::into(test_packet)).await?;
+    socket.send(&buf).await?;
     Ok(())
 }
 ```
