@@ -1,12 +1,12 @@
 [package]
 name = "coe"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 license = "MIT-0"
 description = "coe is a full implementation of the CoEv2 protocol by Technische Alternative"
 repository = "https://github.com/curatorsigma/coe-rs"
 keywords = ["coe"]
-categories = ["network-programming", "no-std"]
+categories = ["network-programming", "no-std", "no-std::no-alloc"]
 authors = ["Jonathan Schleucher"]
 readme = "README.md"
 
