@@ -29,18 +29,30 @@ use alloc::string::String;
 
 mod tests;
 
+/// All the Errors that can appear when parsing a COE packet.
 #[derive(Debug,PartialEq)]
 pub enum ParseCOEError {
+    /// The Node value is not allowed (1-62)
     NodeDisallowed(u8),
+    /// The PDO is not allowed (0-63 on-wire == 1-64 in-GUI)
     PDOIndexDisallowed(u8),
+    /// The Format (Analogue | Digital) and Unit are not compatible.
     FormatAndUnitIncompatible(String),
+    /// The Format is unknwon (neither Analogue nor Digital)
     FormatUnknown(u8),
+    /// The Value hat an incorrect size.
     ValueSize(usize),
+    /// A boolean value was expected due to the format, but not present.
     ValueNotBool([u8; 4]),
+    /// The packet is shorter then the CoE header of 4 bytes
     PacketBelowHeaderLength,
+    /// The CoE Protocol Version is not implemented.
     VersionNotImplemented(u8, u8),
+    /// The packet size and payload length given are incompatible.
     PacketLengthInconsistent(u8, u8),
+    /// The packet size given in the header is not the length of the packet actually found.
     PacketSizeConflictsWithHeader(u8, usize),
+    /// Got a payload frame that is not 8 bytes long.
     PayloadFrameLengthIncorrect(usize),
 }
 #[cfg(feature = "std")]
@@ -57,7 +69,7 @@ impl std::fmt::Display for ParseCOEError {
             Self::VersionNotImplemented(major, minor) => { write!(f, "Version {major}.{minor} is not implemented.") },
             Self::PacketLengthInconsistent(size, length) => { write!(f, "The packet size ({size}) and payload length ({length}) are inconsistent.") },
             Self::PacketSizeConflictsWithHeader(header, actual) => { write!(f, "The packet size should be {header} but is actually {actual}.") },
-            Self::PayloadFrameLengthIncorrect(actual) => { write!(f, "Got a payload from of length {actual}. 8 expected.") },
+            Self::PayloadFrameLengthIncorrect(actual) => { write!(f, "Got a payload frame of length {actual}. 8 expected.") },
         }
     }
 }
@@ -82,9 +94,9 @@ impl std::error::Error for PacketMaxPayloadsExceeded {}
 
 /// A COE Packet
 ///
-/// Note: we enforce and assume that payload.len() never exceeds 31.
+/// Note: we enforce and assume that `payload.len()` never exceeds 31.
 /// This is required, because the packet contains its own size (in bytes) in a field containing a
-/// u8, so no more then 255 (u8::MAX) bytes may ever be contained in a packets full representation.
+/// u8, so no more then 255 (`u8::MAX`) bytes may ever be contained in a packets full representation.
 /// The packet on wire contains 4 bytes of headers, leaving us with 251 usable bytes. A payload
 /// length of 8 byte per payload yields 31 full payloads that fit in the max packet length.
 #[derive(Debug,PartialEq)]
@@ -165,7 +177,7 @@ impl Packet {
 
     /// Try to append a payload to a packet
     ///
-    /// Fails if the final packet size would exceed 255 bytes (31 payloads)
+    /// Fails if the final packet size would exceed 255 bytes (31 payloads).
     /// On failure, the packet was left unmodified.
     pub fn try_push(&mut self, payload: Payload) -> Result<(), PacketMaxPayloadsExceeded> {
         if self.payload.len() * 8 + 4 >= u8::MAX as usize {
@@ -177,7 +189,7 @@ impl Packet {
 
     /// Try to append all the given payloads to a packet
     ///
-    /// Fails if the final packet size would exceed 255 bytes (31 payloads)
+    /// Fails if the final packet size would exceed 255 bytes (31 payloads).
     /// On failure, the packet was left unmodified.
     pub fn try_append_from_slice(&mut self, payloads: &[Payload]) -> Result<(), PacketMaxPayloadsExceeded> {
         if (self.payload.len() + payloads.len()) * 8 + 4 >= u8::MAX as usize {
@@ -219,8 +231,11 @@ impl TryFrom<(u8, u8)> for COEVersion {
 }
 
 /// Information present in a CoE payload header (sent before every value)
-/// This struct will only be created via TryFrom([u8; 4]). Correct node number and pdo_index are
-/// enforced in this TryFrom
+/// This struct will only be created via `TryFrom::<[u8; 4]>`. Correct node number and pdo_index are
+/// enforced in this TryFrom.
+///
+/// NOTE: the pdo_index is offset by one to the representation in the GUI.
+/// We store the on-wire format here, without the +1 offset present in the GUIs.
 #[derive(Debug,PartialEq,Copy,Clone)]
 pub struct Payload {
     /// The receiving CAN bus will create a virtual CAN node with this node number to send CAN
@@ -361,11 +376,13 @@ impl std::error::Error for FromDayOfMonthError {}
 ///
 /// Example:
 /// ```rust
-/// use coe::{AnalogueCOEValue, from_day_of_month, FromDayOfMonthError};
+/// # use coe::{AnalogueCOEValue, from_day_of_month, FromDayOfMonthError};
 /// let val = from_day_of_month(AnalogueCOEValue::DayOfMonth(173));
 /// assert_eq!(val, Ok((19, 6)));
+///
 /// let val = from_day_of_month(AnalogueCOEValue::DayOfMonth(-1234));
 /// assert_eq!(val, Err(FromDayOfMonthError::ValueOutOfBounds(-1234)));
+///
 /// let val = from_day_of_month(AnalogueCOEValue::DegreeKelvin_Tens(123));
 /// assert_eq!(val, Err(FromDayOfMonthError::NotDayOfMonth));
 /// ```
@@ -394,9 +411,10 @@ pub fn from_day_of_month(value: AnalogueCOEValue) -> Result<(u8, u8), FromDayOfM
 ///
 /// Example:
 /// ```rust
-/// use coe::{AnalogueCOEValue, to_month_of_year};
+/// # use coe::{AnalogueCOEValue, to_month_of_year};
 /// let val = to_month_of_year(8, 1852);
 /// assert_eq!(val, Some(AnalogueCOEValue::MonthOfYear(22231)));
+///
 /// let val = to_month_of_year(58, 6);
 /// assert_eq!(val, None);
 /// ```
@@ -426,11 +444,13 @@ impl std::error::Error for FromMonthOfYearError {}
 ///
 /// Example:
 /// ```rust
-/// use coe::{AnalogueCOEValue, from_month_of_year, FromMonthOfYearError};
+/// # use coe::{AnalogueCOEValue, from_month_of_year, FromMonthOfYearError};
 /// let val = from_month_of_year(AnalogueCOEValue::MonthOfYear(22231));
 /// assert_eq!(val, Ok((8, 1852)));
+///
 /// let val = from_month_of_year(AnalogueCOEValue::MonthOfYear(13 * u16::MAX as i32));
 /// assert_eq!(val, Err(FromMonthOfYearError::ValueOutOfBounds(13 * u16::MAX as i32)));
+///
 /// let val = from_month_of_year(AnalogueCOEValue::DegreeKelvin_Tens(123));
 /// assert_eq!(val, Err(FromMonthOfYearError::NotMonthOfYear));
 /// ```
