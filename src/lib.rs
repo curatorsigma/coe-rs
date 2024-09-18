@@ -147,20 +147,6 @@ impl alloc::fmt::Display for ParseCOEError {
 #[cfg(feature = "std")]
 impl std::error::Error for ParseCOEError {}
 
-/// A COE packet can have at most 255 bytes = 31 Payloads.
-/// This Error occurs, when the user tries to add another payload to a packet that is already full.
-#[derive(Hash, Debug, PartialEq, Eq, Clone, Copy)]
-#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
-pub struct PacketMaxPayloadsExceeded {}
-#[cfg(feature = "alloc")]
-impl alloc::fmt::Display for PacketMaxPayloadsExceeded {
-    fn fmt(&self, f: &mut alloc::fmt::Formatter) -> alloc::fmt::Result {
-        write!(f, "The maximal allowed number of payloads was exceeded.")
-    }
-}
-#[cfg(feature = "std")]
-impl std::error::Error for PacketMaxPayloadsExceeded {}
-
 // NOTE: We only implement CoE v2.0 for now.
 // Parsing a CoE packet of other versions will return an apropriate error.
 

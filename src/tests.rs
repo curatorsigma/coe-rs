@@ -1490,10 +1490,10 @@ fn too_many_payloads() {
     };
     let payloads = [payload; 32];
     let res = Packet::try_from_payloads(&payloads);
-    assert_eq!(res, Err(crate::PacketMaxPayloadsExceeded {}));
+    assert_eq!(res, None);
 
     let mut res = Packet::try_from_payloads(&payloads[..31]).unwrap();
-    assert_eq!(res.try_push(payload), Err(crate::PacketMaxPayloadsExceeded {}));
+    assert_eq!(res.try_push(payload), None);
 }
 
 #[test]

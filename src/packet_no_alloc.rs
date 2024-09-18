@@ -91,23 +91,23 @@ impl Packet {
     }
 
     /// Create a [Packet] with [Payload]s. Fails if more then 31 payloads are given.
-    pub fn try_from_payloads(payloads: &[Payload]) -> Result<Packet, PacketMaxPayloadsExceeded> {
+    pub fn try_from_payloads(payloads: &[Payload]) -> Option<Packet> {
         let mut p = Packet::new();
         p.try_append_from_slice(payloads)?;
-        Ok(p)
+        Some(p)
     }
 
     /// Try to append a [Payload] to a [Packet]
     ///
     /// Fails if the final packet size would exceed 255 bytes (31 payloads).
     /// On failure, the packet was left unmodified.
-    pub fn try_push(&mut self, payload: Payload) -> Result<(), PacketMaxPayloadsExceeded> {
+    pub fn try_push(&mut self, payload: Payload) -> Option<()> {
         if self.payload_length >= 31 {
-            return Err(PacketMaxPayloadsExceeded {});
+            return None;
         };
         self.payloads[self.payload_length as usize] = payload;
         self.payload_length += 1;
-        Ok(())
+        Some(())
     }
 
     /// Try to append all the given [Payload]s to a [Packet]
@@ -117,13 +117,13 @@ impl Packet {
     pub fn try_append_from_slice(
         &mut self,
         payloads: &[Payload],
-    ) -> Result<(), PacketMaxPayloadsExceeded> {
+    ) -> Option<()> {
         if (self.payload_length as usize + payloads.len()) * 8 + 4 >= u8::MAX as usize {
-            return Err(PacketMaxPayloadsExceeded {});
+            return None;
         };
         self.payloads[self.payload_length as usize..self.payload_length as usize + payloads.len()].clone_from_slice(payloads);
         self.payload_length += payloads.len() as u8;
-        Ok(())
+        Some(())
     }
 
     /// Serialize this Packet into a `&[u8]` which can be sent on-the-wire.
