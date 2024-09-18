@@ -89,6 +89,11 @@ Consists of these values, in order, starting from the 1st byte of the Payload.
 `coe-rs` in its current state is (apart from potential bugs I have not found yet) fully compliant to the CoEv2.0 Spec.
 CoEv1 is not currently implemented. If you need that protocol, consider opening a PR.
 
+## SemVer pre-1.0
+I promise the following SemVer while pre-1.0:
+- breaking changes WILL bump the minor version
+- minor changed WILL bump the patch version and MAY bump the minor version if they are substantial
+
 ## MSRV
 Minimum supported Rust version is `rustc 1.80.1`. Earlier versions of rustc may work, but they have not been tested.
 
