@@ -3,6 +3,22 @@
 //!
 //! `coe` uses [std] by default to implement [std::error::Error] on all internal error types.
 //! If you need to use coe in a `no_std` environment, disable the default features.
+//!
+//! ```ignore
+//! #[tokio::main]
+//! async fn main() -> Result<(), Box<dyn std::error::Error>> {
+//!     let mut test_packet = Packet::new();
+//!     // send to CAN-ID 58, at offset 1
+//!     test_packet.try_push(Payload::new(58, 1, coe::COEValue::Analogue(AnalogueCOEValue::LiterPerPulse_Tens(123))))?;
+//! 
+//!     let socket = UdpSocket::bind("0.0.0.0:34215").await?;
+//!     // connect to the IP of your CMI
+//!     socket.connect("192.168.1.123:5442").await?;
+//!     socket.send(&Into::<Vec<u8>>::into(test_packet)).await?;
+//!     Ok(())
+//! }
+//! ```
+
 #![cfg_attr(not(feature = "std"), no_std)]
 
 extern crate alloc;
