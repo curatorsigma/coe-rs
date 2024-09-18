@@ -64,6 +64,7 @@ pub enum ParseCOEError {
     /// Got a payload frame that is not 8 bytes long.
     PayloadFrameLengthIncorrect(usize),
 }
+#[cfg(feature = "alloc")]
 impl alloc::fmt::Display for ParseCOEError {
     fn fmt(&self, f: &mut alloc::fmt::Formatter) -> alloc::fmt::Result {
         match self {
@@ -134,6 +135,7 @@ impl std::error::Error for ParseCOEError {}
 #[derive(Hash, Debug, PartialEq, Eq, Clone, Copy)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub struct PacketMaxPayloadsExceeded {}
+#[cfg(feature = "alloc")]
 impl alloc::fmt::Display for PacketMaxPayloadsExceeded {
     fn fmt(&self, f: &mut alloc::fmt::Formatter) -> alloc::fmt::Result {
         write!(f, "The maximal allowed number of payloads was exceeded.")
@@ -467,6 +469,7 @@ pub enum FromDayOfMonthError {
     /// Note that TA-Hardware always accepts the Value, but assignes useless values here instead.
     ValueOutOfBounds(i32),
 }
+#[cfg(feature = "alloc")]
 impl alloc::fmt::Display for FromDayOfMonthError {
     fn fmt(&self, f: &mut alloc::fmt::Formatter) -> alloc::fmt::Result {
         match self {
@@ -549,6 +552,7 @@ pub enum FromMonthOfYearError {
     /// Note that TA-Hardware always accepts the Value, but assignes useless values here instead.
     ValueOutOfBounds(i32),
 }
+#[cfg(feature = "alloc")]
 impl alloc::fmt::Display for FromMonthOfYearError {
     fn fmt(&self, f: &mut alloc::fmt::Formatter) -> alloc::fmt::Result {
         match self {
