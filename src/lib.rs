@@ -24,9 +24,16 @@
 #[cfg(feature = "alloc")]
 extern crate alloc;
 #[cfg(feature = "alloc")]
-use alloc::{vec, vec::Vec, format, string::String};
+use alloc::{vec, vec::Vec};
 
 mod tests;
+
+#[derive(Hash, Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
+pub enum Format {
+    Analogue,
+    Digital,
+}
 
 /// All the Errors that can appear when parsing a COE packet.
 #[derive(Hash, Debug, PartialEq, Eq, Clone)]
@@ -37,7 +44,9 @@ pub enum ParseCOEError {
     /// The PDO is not allowed (0-63 on-wire == 1-64 in-GUI)
     PDOIndexDisallowed(u8),
     /// The Format (Analogue | Digital) and Unit are not compatible.
-    FormatAndUnitIncompatible(String),
+    /// Format: the format type expected
+    /// u8: the Unit that was defined but is of the wrong Format type
+    FormatAndUnitIncompatible(Format, u8),
     /// The Format is unknwon (neither Analogue nor Digital)
     FormatUnknown(u8),
     /// The Value hat an incorrect size.
@@ -64,8 +73,15 @@ impl alloc::fmt::Display for ParseCOEError {
             Self::PDOIndexDisallowed(x) => {
                 write!(f, "The PDO Index must be in 0-63, but {} was supplied.", x)
             }
-            Self::FormatAndUnitIncompatible(x) => {
-                write!(f, "FormatAndUnitIncompatible({x})")
+            Self::FormatAndUnitIncompatible(format, unit) => {
+                match format {
+                    Format::Analogue => {
+                        write!(f, "The unit with ID {unit} is not known as an analogue value in CoE.")
+                    }
+                    Format::Digital =>  {
+                        write!(f, "The unit with ID {unit} is not known as a digital value in CoE.")
+                    }
+                }
             }
             Self::FormatUnknown(x) => {
                 write!(f, "The Format with ID {} is not known.", &x)
@@ -766,9 +782,7 @@ impl TryFrom<(&u8, &[u8])> for AnalogueCOEValue {
             73 => Ok(Self::CentiMeter_Tens(inner_value)),
             74 => Ok(Self::ColourTemperature(inner_value)),
             75 => Ok(Self::Lux_Tens(inner_value)),
-            m => Err(Self::Error::FormatAndUnitIncompatible(format!(
-                "The Unit ID {m} is not known as an analogue Unit."
-            ))),
+            m => Err(Self::Error::FormatAndUnitIncompatible(Format::Analogue, *m)),
         }
     }
 }
@@ -1118,9 +1132,7 @@ impl TryFrom<(&u8, &[u8])> for DigitalCOEValue {
             44 => Ok(Self::YesNo(inner_bool)),
             45 => Ok(Self::RASMode(inner_bool)),
             47 => Ok(Self::Mixer(inner_bool)),
-            m => Err(Self::Error::FormatAndUnitIncompatible(format!(
-                "The Unit ID {m} is not known as a digital Unit."
-            ))),
+            m => Err(Self::Error::FormatAndUnitIncompatible(Format::Digital, *m)),
         }
     }
 }
