@@ -10,7 +10,7 @@
 //!     let mut test_packet = Packet::new();
 //!     // send to CAN-ID 58, at offset 1
 //!     test_packet.try_push(Payload::new(58, 1, coe::COEValue::Analogue(AnalogueCOEValue::LiterPerPulse_Tens(123))))?;
-//! 
+//!
 //!     let socket = UdpSocket::bind("0.0.0.0:34215").await?;
 //!     // connect to the IP of your CMI
 //!     socket.connect("192.168.1.123:5442").await?;
@@ -22,15 +22,15 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 extern crate alloc;
-use alloc::vec;
-use alloc::vec::Vec;
 use alloc::format;
 use alloc::string::String;
+use alloc::vec;
+use alloc::vec::Vec;
 
 mod tests;
 
 /// All the Errors that can appear when parsing a COE packet.
-#[derive(Debug,PartialEq)]
+#[derive(Debug, PartialEq)]
 pub enum ParseCOEError {
     /// The Node value is not allowed (1-62)
     NodeDisallowed(u8),
@@ -59,17 +59,51 @@ pub enum ParseCOEError {
 impl std::fmt::Display for ParseCOEError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Self::NodeDisallowed(x) => { write!(f, "The Nodenumber must be in 1-62, but {} was supplied.", x) },
-            Self::PDOIndexDisallowed(x) => { write!(f, "The PDO Index must be in 0-63, but {} was supplied.", x) },
-            Self::FormatAndUnitIncompatible(x) => { write!(f, "FormatAndUnitIncompatible({x})") },
-            Self::FormatUnknown(x) => { write!(f, "The Format with ID {} is not known.", &x) },
-            Self::ValueSize(x) => { write!(f, "Slice containing COEValue was {x} bytes long. 4 expected.") },
-            Self::ValueNotBool(x) => { write!(f, "Expected Value to be bool because of Format/Unit, but got {x:?}.") },
-            Self::PacketBelowHeaderLength => { write!(f, "The packet is not at least 4 byte long.") },
-            Self::VersionNotImplemented(major, minor) => { write!(f, "Version {major}.{minor} is not implemented.") },
-            Self::PacketLengthInconsistent(size, length) => { write!(f, "The packet size ({size}) and payload length ({length}) are inconsistent.") },
-            Self::PacketSizeConflictsWithHeader(header, actual) => { write!(f, "The packet size should be {header} but is actually {actual}.") },
-            Self::PayloadFrameLengthIncorrect(actual) => { write!(f, "Got a payload frame of length {actual}. 8 expected.") },
+            Self::NodeDisallowed(x) => {
+                write!(f, "The Nodenumber must be in 1-62, but {} was supplied.", x)
+            }
+            Self::PDOIndexDisallowed(x) => {
+                write!(f, "The PDO Index must be in 0-63, but {} was supplied.", x)
+            }
+            Self::FormatAndUnitIncompatible(x) => {
+                write!(f, "FormatAndUnitIncompatible({x})")
+            }
+            Self::FormatUnknown(x) => {
+                write!(f, "The Format with ID {} is not known.", &x)
+            }
+            Self::ValueSize(x) => {
+                write!(
+                    f,
+                    "Slice containing COEValue was {x} bytes long. 4 expected."
+                )
+            }
+            Self::ValueNotBool(x) => {
+                write!(
+                    f,
+                    "Expected Value to be bool because of Format/Unit, but got {x:?}."
+                )
+            }
+            Self::PacketBelowHeaderLength => {
+                write!(f, "The packet is not at least 4 byte long.")
+            }
+            Self::VersionNotImplemented(major, minor) => {
+                write!(f, "Version {major}.{minor} is not implemented.")
+            }
+            Self::PacketLengthInconsistent(size, length) => {
+                write!(
+                    f,
+                    "The packet size ({size}) and payload length ({length}) are inconsistent."
+                )
+            }
+            Self::PacketSizeConflictsWithHeader(header, actual) => {
+                write!(
+                    f,
+                    "The packet size should be {header} but is actually {actual}."
+                )
+            }
+            Self::PayloadFrameLengthIncorrect(actual) => {
+                write!(f, "Got a payload frame of length {actual}. 8 expected.")
+            }
         }
     }
 }
@@ -78,7 +112,7 @@ impl std::error::Error for ParseCOEError {}
 
 /// A COE packet can have at most 255 bytes = 31 Payloads.
 /// This Error occurs, when the user tries to add another payload to a packet that is already full.
-#[derive(Debug,PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct PacketMaxPayloadsExceeded {}
 impl alloc::fmt::Display for PacketMaxPayloadsExceeded {
     fn fmt(&self, f: &mut alloc::fmt::Formatter) -> alloc::fmt::Result {
@@ -87,7 +121,6 @@ impl alloc::fmt::Display for PacketMaxPayloadsExceeded {
 }
 #[cfg(feature = "std")]
 impl std::error::Error for PacketMaxPayloadsExceeded {}
-
 
 // NOTE: We only implement CoE v2.0 for now.
 // Parsing a CoE packet of other versions will return an apropriate error.
@@ -99,7 +132,7 @@ impl std::error::Error for PacketMaxPayloadsExceeded {}
 /// u8, so no more then 255 (`u8::MAX`) bytes may ever be contained in a packets full representation.
 /// The packet on wire contains 4 bytes of headers, leaving us with 251 usable bytes. A payload
 /// length of 8 byte per payload yields 31 full payloads that fit in the max packet length.
-#[derive(Debug,PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct Packet {
     /// CoE Version used. Currently, only 2.0 is supported.
     version: COEVersion,
@@ -122,15 +155,20 @@ impl TryFrom<&[u8]> for Packet {
         // we are now certain that the header is correctly formed.
         // Assert that the packet actually has the correct size as given in the header.
         if value.len() != value[2].into() {
-            return Err(Self::Error::PacketSizeConflictsWithHeader(value[2], value.len()));
+            return Err(Self::Error::PacketSizeConflictsWithHeader(
+                value[2],
+                value.len(),
+            ));
         };
         // The packet has the correct length. We can chunk it and parse each value independently
         // without additional checks for buffer overrun
         let mut payload: Vec<Payload> = vec![];
         for payload_nr in 0..value[3] {
             // each payload is exactly 8 bytes long - +4 is the header offset
-            payload.push(value[(payload_nr * 8 + 4) as usize..=(payload_nr * 8 + 11) as usize].try_into()?);
-        };
+            payload.push(
+                value[(payload_nr * 8 + 4) as usize..=(payload_nr * 8 + 11) as usize].try_into()?,
+            );
+        }
         Ok(Packet { version, payload })
     }
 }
@@ -141,8 +179,14 @@ impl From<Packet> for Vec<u8> {
     /// that the resulting serialization will always be at most 255 bytes long.
     fn from(value: Packet) -> Self {
         // precalculate the package size so we can allocate exactly the correct vector length
-        let payload_length: u8 = value.payload.len().try_into().expect("Packet is larger then the largest possible COE frame allows.");
-        let package_size: u8 = (payload_length * 8 + 4).try_into().expect("Packet is larger then the largest possible COE frame allows.");
+        let payload_length: u8 = value
+            .payload
+            .len()
+            .try_into()
+            .expect("Packet is larger then the largest possible COE frame allows.");
+        let package_size: u8 = (payload_length * 8 + 4)
+            .try_into()
+            .expect("Packet is larger then the largest possible COE frame allows.");
 
         // we initialize this vector to all 0 and thus satisfy the requirements for
         // payload.serialize_into
@@ -165,7 +209,10 @@ impl From<Packet> for Vec<u8> {
 impl Packet {
     /// Create a packet without payloads
     pub fn new() -> Packet {
-        Packet { version: COEVersion { major: 2, minor: 0 }, payload: vec![] }
+        Packet {
+            version: COEVersion { major: 2, minor: 0 },
+            payload: vec![],
+        }
     }
 
     /// Create a packet with payloads. Fails if more then 31 payloads are given.
@@ -181,7 +228,7 @@ impl Packet {
     /// On failure, the packet was left unmodified.
     pub fn try_push(&mut self, payload: Payload) -> Result<(), PacketMaxPayloadsExceeded> {
         if self.payload.len() * 8 + 4 >= u8::MAX as usize {
-            return Err(PacketMaxPayloadsExceeded { });
+            return Err(PacketMaxPayloadsExceeded {});
         };
         self.payload.push(payload);
         Ok(())
@@ -191,7 +238,10 @@ impl Packet {
     ///
     /// Fails if the final packet size would exceed 255 bytes (31 payloads).
     /// On failure, the packet was left unmodified.
-    pub fn try_append_from_slice(&mut self, payloads: &[Payload]) -> Result<(), PacketMaxPayloadsExceeded> {
+    pub fn try_append_from_slice(
+        &mut self,
+        payloads: &[Payload],
+    ) -> Result<(), PacketMaxPayloadsExceeded> {
         if (self.payload.len() + payloads.len()) * 8 + 4 >= u8::MAX as usize {
             return Err(PacketMaxPayloadsExceeded {});
         };
@@ -204,15 +254,14 @@ impl Packet {
 ///
 /// This is infallible and always creates enough [Packet]s to pack all [Payload]s into.
 pub fn packets_from_payloads(payloads: &[Payload]) -> Vec<Packet> {
-    payloads.chunks(31).map(|c| {
-        Packet::try_from_payloads(c)
-            .expect("Length should be satisfied by chunking")
-    })
-    .collect::<Vec<Packet>>()
+    payloads
+        .chunks(31)
+        .map(|c| Packet::try_from_payloads(c).expect("Length should be satisfied by chunking"))
+        .collect::<Vec<Packet>>()
 }
 
 /// The Version of COE protocol used.
-#[derive(Debug,PartialEq)]
+#[derive(Debug, PartialEq)]
 struct COEVersion {
     /// The major CoE Version. Only 2 is supported.
     major: u8,
@@ -226,7 +275,7 @@ impl TryFrom<(u8, u8)> for COEVersion {
         if value.0 != 2 || value.1 != 0 {
             return Err(Self::Error::VersionNotImplemented(value.0, value.1));
         };
-        Ok(COEVersion{ major: 2, minor: 0})
+        Ok(COEVersion { major: 2, minor: 0 })
     }
 }
 
@@ -236,7 +285,7 @@ impl TryFrom<(u8, u8)> for COEVersion {
 ///
 /// NOTE: the pdo_index is offset by one to the representation in the GUI.
 /// We store the on-wire format here, without the +1 offset present in the GUIs.
-#[derive(Debug,PartialEq,Copy,Clone)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub struct Payload {
     /// The receiving CAN bus will create a virtual CAN node with this node number to send CAN
     /// messages onto the bus from.
@@ -254,10 +303,10 @@ impl TryFrom<&[u8]> for Payload {
     fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
         // bound check the node and pdo_index values:
         if value[0] == 0 || value[0] >= 63 {
-            return Err(Self::Error::NodeDisallowed(value[0]))
+            return Err(Self::Error::NodeDisallowed(value[0]));
         };
         if value[1] >= 64 {
-            return Err(Self::Error::PDOIndexDisallowed(value[1]))
+            return Err(Self::Error::PDOIndexDisallowed(value[1]));
         };
         if value.len() != 8 {
             return Err(Self::Error::PayloadFrameLengthIncorrect(value.len()));
@@ -268,20 +317,32 @@ impl TryFrom<&[u8]> for Payload {
         match value[2] {
             0 => {
                 let coe_value: DigitalCOEValue = (&value[3], &value[4..8]).try_into()?;
-                Ok(Payload{ node: value[0], pdo_index: value[1], value: COEValue::Digital(coe_value) })
-            },
+                Ok(Payload {
+                    node: value[0],
+                    pdo_index: value[1],
+                    value: COEValue::Digital(coe_value),
+                })
+            }
             1 => {
                 let coe_value: AnalogueCOEValue = (&value[3], &value[4..8]).try_into()?;
-                Ok(Payload{ node: value[0], pdo_index: value[1], value: COEValue::Analogue(coe_value) })
-            },
-            _ => { Err(Self::Error::FormatUnknown(value[2])) },
+                Ok(Payload {
+                    node: value[0],
+                    pdo_index: value[1],
+                    value: COEValue::Analogue(coe_value),
+                })
+            }
+            _ => Err(Self::Error::FormatUnknown(value[2])),
         }
     }
 }
 impl Payload {
     /// Create a new payload from the given destination and value.
     pub fn new(node: u8, pdo_index: u8, value: COEValue) -> Payload {
-        Payload{node, pdo_index, value}
+        Payload {
+            node,
+            pdo_index,
+            value,
+        }
     }
 
     /// Serialize this Payload into the given buffer
@@ -300,7 +361,7 @@ impl Payload {
 }
 
 /// Any Value that is representable in COE.
-#[derive(Debug,PartialEq,Copy,Clone)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub enum COEValue {
     /// An `analogue` Value.
     ///
@@ -323,11 +384,11 @@ impl COEValue {
             COEValue::Analogue(x) => {
                 buf[0] = 1;
                 x.serialize_into(&mut buf[1..6]);
-            },
+            }
             COEValue::Digital(x) => {
                 buf[0] = 0;
                 x.serialize_into(&mut buf[1..6]);
-            },
+            }
         };
     }
 }
@@ -350,9 +411,15 @@ impl COEValue {
 /// assert_eq!(val, None);
 /// ```
 pub fn to_day_of_month(day: u8, month: u8) -> Option<AnalogueCOEValue> {
-    if day > 31 { return None; }
-    if month > 12 { return None; }
-    Some(AnalogueCOEValue::DayOfMonth((day - 1) as i32 + (month - 1) as i32 * 31))
+    if day > 31 {
+        return None;
+    }
+    if month > 12 {
+        return None;
+    }
+    Some(AnalogueCOEValue::DayOfMonth(
+        (day - 1) as i32 + (month - 1) as i32 * 31,
+    ))
 }
 
 /// The Errors that can occur when parsing an integer as day of month
@@ -368,11 +435,13 @@ impl alloc::fmt::Display for FromDayOfMonthError {
     fn fmt(&self, f: &mut alloc::fmt::Formatter) -> alloc::fmt::Result {
         match self {
             Self::NotDayOfMonth => write!(f, "Value was not DayOfMonth"),
-            Self::ValueOutOfBounds(x) => write!(f, "The Value {x} cannot be parsed as a day, month pair."),
+            Self::ValueOutOfBounds(x) => {
+                write!(f, "The Value {x} cannot be parsed as a day, month pair.")
+            }
         }
     }
 }
-#[cfg(feature="std")]
+#[cfg(feature = "std")]
 impl std::error::Error for FromDayOfMonthError {}
 
 /// Convert the internal format for DayOfMonth into two u8s containing day and month
@@ -399,12 +468,13 @@ pub fn from_day_of_month(value: AnalogueCOEValue) -> Result<(u8, u8), FromDayOfM
             if x < 0 || x > 30 + 31 * 11 {
                 Err(FromDayOfMonthError::ValueOutOfBounds(x))
             } else {
-                Ok(((1 + x % 31).try_into().expect("Modulo 31 yields u8"), (1 + x / 31).try_into().expect("Length was checked before")))
+                Ok((
+                    (1 + x % 31).try_into().expect("Modulo 31 yields u8"),
+                    (1 + x / 31).try_into().expect("Length was checked before"),
+                ))
             }
         }
-        _ =>  {
-            Err(FromDayOfMonthError::NotDayOfMonth)
-        }
+        _ => Err(FromDayOfMonthError::NotDayOfMonth),
     }
 }
 
@@ -422,8 +492,12 @@ pub fn from_day_of_month(value: AnalogueCOEValue) -> Result<(u8, u8), FromDayOfM
 /// assert_eq!(val, None);
 /// ```
 pub fn to_month_of_year(month: u8, year: u16) -> Option<AnalogueCOEValue> {
-    if month > 12 { return None; }
-    Some(AnalogueCOEValue::MonthOfYear((month - 1) as i32 + year as i32 * 12))
+    if month > 12 {
+        return None;
+    }
+    Some(AnalogueCOEValue::MonthOfYear(
+        (month - 1) as i32 + year as i32 * 12,
+    ))
 }
 
 /// The Errors that can occur when parsing an integer as day of month
@@ -439,11 +513,13 @@ impl alloc::fmt::Display for FromMonthOfYearError {
     fn fmt(&self, f: &mut alloc::fmt::Formatter) -> alloc::fmt::Result {
         match self {
             Self::NotMonthOfYear => write!(f, "Value was not MonthOfYear"),
-            Self::ValueOutOfBounds(x) => write!(f, "The Value {x} cannot be parsed as a month, year pair."),
+            Self::ValueOutOfBounds(x) => {
+                write!(f, "The Value {x} cannot be parsed as a month, year pair.")
+            }
         }
     }
 }
-#[cfg(feature="std")]
+#[cfg(feature = "std")]
 impl std::error::Error for FromMonthOfYearError {}
 
 /// Convert the internal format for MonthOfYear into a u8 and u16 containing month and year
@@ -470,15 +546,15 @@ pub fn from_month_of_year(value: AnalogueCOEValue) -> Result<(u8, u16), FromMont
             if x < 0 || x > 11 + 12 * u16::MAX as i32 {
                 Err(FromMonthOfYearError::ValueOutOfBounds(x))
             } else {
-                Ok(((1 + x % 12).try_into().expect("Modulo 12 yields u8"), (x / 12).try_into().expect("Length was checked before")))
+                Ok((
+                    (1 + x % 12).try_into().expect("Modulo 12 yields u8"),
+                    (x / 12).try_into().expect("Length was checked before"),
+                ))
             }
         }
-        _ =>  {
-            Err(FromMonthOfYearError::NotMonthOfYear)
-        }
+        _ => Err(FromMonthOfYearError::NotMonthOfYear),
     }
 }
-
 
 /// All the different analogue values representable in CoE.
 /// Ordering (and therefore numbering) is the one used internally in the CoE spec.
@@ -486,7 +562,7 @@ pub fn from_month_of_year(value: AnalogueCOEValue) -> Result<(u8, u16), FromMont
 // We allow non_camel_case_types here, so that we can better separate the comma position from the
 // actual content here (I think this is the cleaner naming scheme in this particular case)
 #[allow(non_camel_case_types)]
-#[derive(PartialEq,Clone,Copy,Debug)]
+#[derive(PartialEq, Clone, Copy, Debug)]
 pub enum AnalogueCOEValue {
     Dimensionless(i32) = 0,
     DegreeCentigrade_Tens(i32) = 1,
@@ -582,7 +658,10 @@ pub enum AnalogueCOEValue {
 impl TryFrom<(&u8, &[u8])> for AnalogueCOEValue {
     type Error = ParseCOEError;
     fn try_from(value: (&u8, &[u8])) -> Result<Self, Self::Error> {
-        let raw_bytes: [u8; 4] = value.1.try_into().map_err(|_| Self::Error::ValueSize(value.1.len()))?;
+        let raw_bytes: [u8; 4] = value
+            .1
+            .try_into()
+            .map_err(|_| Self::Error::ValueSize(value.1.len()))?;
         let inner_value = i32::from_le_bytes(raw_bytes);
         match value.0 {
             0 => Ok(Self::Dimensionless(inner_value)),
@@ -649,7 +728,7 @@ impl TryFrom<(&u8, &[u8])> for AnalogueCOEValue {
                 let months = bytes[1];
                 let years: u16 = (bytes[2] as u16) + 256 * (bytes[3] as u16);
                 Ok(Self::Date(days, months, years))
-            },
+            }
             63 => Ok(Self::Ampere_Tens(inner_value)),
             64 => Ok(Self::MonthOfYear(inner_value)),
             65 => Ok(Self::Millibar_Tens(inner_value)),
@@ -663,7 +742,9 @@ impl TryFrom<(&u8, &[u8])> for AnalogueCOEValue {
             73 => Ok(Self::CentiMeter_Tens(inner_value)),
             74 => Ok(Self::ColourTemperature(inner_value)),
             75 => Ok(Self::Lux_Tens(inner_value)),
-            m => Err(Self::Error::FormatAndUnitIncompatible(format!("The Unit ID {m} is not known as an analogue Unit."))),
+            m => Err(Self::Error::FormatAndUnitIncompatible(format!(
+                "The Unit ID {m} is not known as an analogue Unit."
+            ))),
         }
     }
 }
@@ -676,300 +757,300 @@ impl AnalogueCOEValue {
             Self::Dimensionless(x) => {
                 buf[0] = 0;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::DegreeCentigrade_Tens(x) => {
                 buf[0] = 1;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::WattPerSquareMeter(x) => {
                 buf[0] = 2;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::LiterPerHour(x) => {
                 buf[0] = 3;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::Seconds(x) => {
                 buf[0] = 4;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::Minutes(x) => {
                 buf[0] = 5;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::LiterPerPulse_Tens(x) => {
                 buf[0] = 6;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::DegreeKelvin_Tens(x) => {
                 buf[0] = 7;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::Percent_Tens(x) => {
                 buf[0] = 8;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::Colon(x) => {
                 buf[0] = 9;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::KiloWatt_Hundreds(x) => {
                 buf[0] = 10;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::KilowattHour_Tens(x) => {
                 buf[0] = 11;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::MegawattHour(x) => {
                 buf[0] = 12;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::Volt_Hundreds(x) => {
                 buf[0] = 13;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::MilliAmpere_Tens(x) => {
                 buf[0] = 14;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::Hours(x) => {
                 buf[0] = 15;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::Days(x) => {
                 buf[0] = 16;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::Pulses(x) => {
                 buf[0] = 17;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::KiloOhm_Hundreds(x) => {
                 buf[0] = 18;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::Liters(x) => {
                 buf[0] = 19;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::KiloMetersPerHour(x) => {
                 buf[0] = 20;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::Hertz_Hundreds(x) => {
                 buf[0] = 21;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::LiterPerMinute(x) => {
                 buf[0] = 22;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::Bar_Hundreds(x) => {
                 buf[0] = 23;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::CoefficientOfPerformance_Hundreds(x) => {
                 buf[0] = 24;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::KiloMeter(x) => {
                 buf[0] = 25;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::Meter_Tens(x) => {
                 buf[0] = 26;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::MilliMeter(x) => {
                 buf[0] = 27;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::CubicMeter(x) => {
                 buf[0] = 28;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::HertzPerKiloMeterPerHour_HundredThousands(x) => {
                 buf[0] = 29;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::HertzPerMeterPerSecond_HundredThousands(x) => {
                 buf[0] = 30;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::KilowattHourPerPulse_HundredThousands(x) => {
                 buf[0] = 31;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::CubicMeterPerPulse_HundredThousands(x) => {
                 buf[0] = 32;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::MilliMeterPerPulse_HundredThousands(x) => {
                 buf[0] = 33;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::LiterPerPulse_HundredThousands(x) => {
                 buf[0] = 34;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::LiterPerDay(x) => {
                 buf[0] = 35;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::MetersPerSecond(x) => {
                 buf[0] = 36;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::CubicMeterPerMinute(x) => {
                 buf[0] = 37;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::CubicMeterPerHour(x) => {
                 buf[0] = 38;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::CubicMeterPerDay(x) => {
                 buf[0] = 39;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::MilliMeterPerMinute_Tens(x) => {
                 buf[0] = 40;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::MilliMeterPerHour_Tens(x) => {
                 buf[0] = 41;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::MilliMeterPerDay_Tens(x) => {
                 buf[0] = 42;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::DegreeCentigradePlusRAS_Tens(x) => {
                 buf[0] = 46;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::HeatingCircuitOpMode(x) => {
                 buf[0] = 48;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::HeatingCircuitOpLevel(x) => {
                 buf[0] = 49;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::CurrencyEuro_Hundreds(x) => {
                 buf[0] = 50;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::CurrencyDollar_Hundreds(x) => {
                 buf[0] = 51;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::AbsoluteHumidity_Tens(x) => {
                 buf[0] = 52;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::PricePerUnit_HundredThousands(x) => {
                 buf[0] = 53;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::Degree_Tens(x) => {
                 buf[0] = 54;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::Blinds(x) => {
                 buf[0] = 55;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::Degree_Millions(x) => {
                 buf[0] = 56;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::Second_Tens(x) => {
                 buf[0] = 57;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::Dimensionless_Tens(x) => {
                 buf[0] = 58;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::BlindsPosition(x) => {
                 buf[0] = 59;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::Time(x) => {
                 buf[0] = 60;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::DayOfMonth(x) => {
                 buf[0] = 61;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::Date(days, months, years) => {
                 buf[0] = 62;
                 buf[1] = *days;
                 buf[2] = *months;
                 buf[3..5].copy_from_slice(&years.to_le_bytes());
-            },
+            }
             Self::Ampere_Tens(x) => {
                 buf[0] = 63;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::MonthOfYear(x) => {
                 buf[0] = 64;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::Millibar_Tens(x) => {
                 buf[0] = 65;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::Pascal(x) => {
                 buf[0] = 66;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::CO2Content(x) => {
                 buf[0] = 67;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::RawHex(x) => {
                 buf[0] = 68;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::Watt(x) => {
                 buf[0] = 69;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::Tonne_Hundreds(x) => {
                 buf[0] = 70;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::KiloGram_Tens(x) => {
                 buf[0] = 71;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::Gram_Tens(x) => {
                 buf[0] = 72;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::CentiMeter_Tens(x) => {
                 buf[0] = 73;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::ColourTemperature(x) => {
                 buf[0] = 74;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
             Self::Lux_Tens(x) => {
                 buf[0] = 75;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
+            }
         };
     }
 }
 
 /// Representation of all existing digital values representable in COE
 #[repr(u8)]
-#[derive(PartialEq,Clone,Copy,Debug)]
+#[derive(PartialEq, Clone, Copy, Debug)]
 pub enum DigitalCOEValue {
     OnOff(bool) = 43,
     YesNo(bool) = 44,
@@ -979,7 +1060,7 @@ pub enum DigitalCOEValue {
     Mixer(bool) = 47,
 }
 
-/// Given the Format and raw value in bytes, try to create the DigitalCOEValue 
+/// Given the Format and raw value in bytes, try to create the DigitalCOEValue
 impl TryFrom<(&u8, &[u8])> for DigitalCOEValue {
     type Error = ParseCOEError;
     fn try_from(value: (&u8, &[u8])) -> Result<Self, Self::Error> {
@@ -988,19 +1069,33 @@ impl TryFrom<(&u8, &[u8])> for DigitalCOEValue {
         };
 
         if value.1[3] != 0 || value.1[2] != 0 || value.1[1] != 0 {
-            return Err(Self::Error::ValueNotBool(value.1.try_into().expect("I already asserted that value.1 has four elements.")));
+            return Err(Self::Error::ValueNotBool(
+                value
+                    .1
+                    .try_into()
+                    .expect("I already asserted that value.1 has four elements."),
+            ));
         };
         let inner_bool = match value.1[0] {
             0 => false,
             1 => true,
-            _ => { return Err(Self::Error::ValueNotBool(value.1.try_into().expect("I already asserted that value.1 has four elements."))); },
+            _ => {
+                return Err(Self::Error::ValueNotBool(
+                    value
+                        .1
+                        .try_into()
+                        .expect("I already asserted that value.1 has four elements."),
+                ));
+            }
         };
         match value.0 {
             43 => Ok(Self::OnOff(inner_bool)),
             44 => Ok(Self::YesNo(inner_bool)),
             45 => Ok(Self::RASMode(inner_bool)),
             47 => Ok(Self::Mixer(inner_bool)),
-            m => Err(Self::Error::FormatAndUnitIncompatible(format!("The Unit ID {m} is not known as a digital Unit."))),
+            m => Err(Self::Error::FormatAndUnitIncompatible(format!(
+                "The Unit ID {m} is not known as a digital Unit."
+            ))),
         }
     }
 }
@@ -1014,19 +1109,19 @@ impl DigitalCOEValue {
             Self::OnOff(x) => {
                 buf[0] = 43;
                 buf[1] = *x as u8;
-            },
+            }
             Self::YesNo(x) => {
                 buf[0] = 44;
                 buf[1] = *x as u8;
-            },
+            }
             Self::RASMode(x) => {
                 buf[0] = 45;
                 buf[1] = *x as u8;
-            },
+            }
             Self::Mixer(x) => {
                 buf[0] = 47;
                 buf[1] = *x as u8;
-            },
+            }
         };
         // all other bits should be cleared
         // but this is already satisfied, because we expect a null buffer
