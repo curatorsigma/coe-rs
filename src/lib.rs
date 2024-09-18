@@ -155,7 +155,7 @@ use packet_alloc::Packet;
 #[cfg(not(feature = "alloc"))]
 mod packet_no_alloc;
 #[cfg(not(feature = "alloc"))]
-use packet_no_alloc::Packet;
+pub use packet_no_alloc::Packet;
 
 /// Convert a slice of [Payload]s into (possibly multiple) [Packet]s.
 ///

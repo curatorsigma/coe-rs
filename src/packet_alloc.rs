@@ -130,8 +130,6 @@ impl Packet {
 
 
 mod test {
-    use super::*;
-
     #[test]
     fn parse_packet_success() {
         let raw_bytes = [
