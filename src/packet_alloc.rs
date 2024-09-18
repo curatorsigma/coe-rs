@@ -15,7 +15,7 @@ pub struct Packet {
     /// CoE Version used. Currently, only 2.0 is supported.
     version: COEVersion,
     /// The actual payloads.
-    payload: Vec<Payload>,
+    payloads: Vec<Payload>,
 }
 impl TryFrom<&[u8]> for Packet {
     type Error = ParseCOEError;
@@ -40,14 +40,14 @@ impl TryFrom<&[u8]> for Packet {
         };
         // The packet has the correct length. We can chunk it and parse each value independently
         // without additional checks for buffer overrun
-        let mut payload: Vec<Payload> = vec![];
+        let mut payloads: Vec<Payload> = vec![];
         for payload_nr in 0..value[3] {
             // each payload is exactly 8 bytes long - +4 is the header offset
-            payload.push(
+            payloads.push(
                 value[(payload_nr * 8 + 4) as usize..=(payload_nr * 8 + 11) as usize].try_into()?,
             );
         }
-        Ok(Packet { version, payload })
+        Ok(Packet { version, payloads })
     }
 }
 impl From<Packet> for Vec<u8> {
@@ -58,7 +58,7 @@ impl From<Packet> for Vec<u8> {
     fn from(value: Packet) -> Self {
         // precalculate the package size so we can allocate exactly the correct vector length
         let payload_length: u8 = value
-            .payload
+            .payloads
             .len()
             .try_into()
             .expect("Packet is larger then the largest possible COE frame allows.");
@@ -67,7 +67,7 @@ impl From<Packet> for Vec<u8> {
             .expect("Packet is larger then the largest possible COE frame allows.");
 
         // we initialize this vector to all 0 and thus satisfy the requirements for
-        // payload.serialize_into
+        // payloads.serialize_into
         let mut res: Vec<u8> = vec![0; package_size as usize];
 
         // the HEADER
@@ -78,7 +78,7 @@ impl From<Packet> for Vec<u8> {
 
         // the PAYLOAD
         // now set each individual payload
-        for (index, payload) in value.payload.iter().enumerate() {
+        for (index, payload) in value.payloads.iter().enumerate() {
             payload.serialize_into(&mut res[4 + index * 8..=11 + index * 8]);
         }
         return res;
@@ -89,7 +89,7 @@ impl Packet {
     pub fn new() -> Packet {
         Packet {
             version: COEVersion { major: 2, minor: 0 },
-            payload: vec![],
+            payloads: vec![],
         }
     }
 
@@ -105,10 +105,10 @@ impl Packet {
     /// Fails if the final packet size would exceed 255 bytes (31 payloads).
     /// On failure, the packet was left unmodified.
     pub fn try_push(&mut self, payload: Payload) -> Result<(), PacketMaxPayloadsExceeded> {
-        if self.payload.len() * 8 + 4 >= u8::MAX as usize {
+        if (self.payloads.len() + 1) * 8 + 4 >= u8::MAX as usize {
             return Err(PacketMaxPayloadsExceeded {});
         };
-        self.payload.push(payload);
+        self.payloads.push(payload);
         Ok(())
     }
 
@@ -120,10 +120,10 @@ impl Packet {
         &mut self,
         payloads: &[Payload],
     ) -> Result<(), PacketMaxPayloadsExceeded> {
-        if (self.payload.len() + payloads.len()) * 8 + 4 >= u8::MAX as usize {
+        if (self.payloads.len() + payloads.len()) * 8 + 4 >= u8::MAX as usize {
             return Err(PacketMaxPayloadsExceeded {});
         };
-        self.payload.extend_from_slice(payloads);
+        self.payloads.extend_from_slice(payloads);
         Ok(())
     }
 }
@@ -144,7 +144,7 @@ mod test {
             packet,
             crate::Packet {
                 version: crate::COEVersion { major: 2, minor: 0 },
-                payload: vec![
+                payloads: vec![
                     crate::Payload {
                         node: 3,
                         pdo_index: 0,
