@@ -358,7 +358,10 @@ pub fn to_day_of_month(day: u8, month: u8) -> Option<AnalogueCOEValue> {
 /// The Errors that can occur when parsing an integer as day of month
 #[derive(Debug, PartialEq)]
 pub enum FromDayOfMonthError {
+    /// The supplied AnalogueCOEValue was not DayOfMonth
     NotDayOfMonth,
+    /// The value is not in bounds for regular FromDayOfMonth.
+    /// Note that TA-Hardware always accepts the Value, but assignes useless values here instead.
     ValueOutOfBounds(i32),
 }
 impl alloc::fmt::Display for FromDayOfMonthError {
@@ -426,7 +429,10 @@ pub fn to_month_of_year(month: u8, year: u16) -> Option<AnalogueCOEValue> {
 /// The Errors that can occur when parsing an integer as day of month
 #[derive(Debug, PartialEq)]
 pub enum FromMonthOfYearError {
+    /// The supplied AnalogueCOEValue was not MonthOfYear.
     NotMonthOfYear,
+    /// The value is not in bounds for regular FromDayOfMonth.
+    /// Note that TA-Hardware always accepts the Value, but assignes useless values here instead.
     ValueOutOfBounds(i32),
 }
 impl alloc::fmt::Display for FromMonthOfYearError {
@@ -542,10 +548,10 @@ pub enum AnalogueCOEValue {
     /// Time, in minutes, represented as HH:MM
     Time(i32) = 60,
     /// Day of month.
-    /// DayOfMonth(day - 1 + 31 * (month - 1))
+    /// `DayOfMonth(day - 1 + 31 * (month - 1))`
     /// corresponds to the day in month
     ///
-    /// Consider using the helper functions [from_day_of_month] and [to_day_of_month]
+    /// Consider using the helper functions [from_day_of_month] and [to_day_of_month] for parsing.
     DayOfMonth(i32) = 61,
     /// Date, as:
     /// days
@@ -553,8 +559,11 @@ pub enum AnalogueCOEValue {
     /// years
     Date(u8, u8, u16) = 62,
     Ampere_Tens(i32) = 63,
-    /// Month + Year im format
-    /// MonthOfYear(year * 12 + month)
+    /// Month + Year.
+    /// `MonthOfYear(year * 12 + month)` corresponds to month in year.
+    ///
+    /// Consider using the helper functions [from_month_of_year] and [to_month_of_year] for
+    /// parsing.
     MonthOfYear(i32) = 64,
     Millibar_Tens(i32) = 65,
     Pascal(i32) = 66,
@@ -965,8 +974,8 @@ pub enum DigitalCOEValue {
     OnOff(bool) = 43,
     YesNo(bool) = 44,
     RASMode(bool) = 45,
-    // true == Normal
-    // false == AUS
+    /// `true == Normal`,
+    /// `false == AUS`
     Mixer(bool) = 47,
 }
 
