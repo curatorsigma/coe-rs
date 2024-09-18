@@ -60,6 +60,7 @@ Consists of these values, in order, starting from the 1st byte of the packet.
 2. Minor Version as unsigned 8-bit integer.
 3. Packet length in byte as unsigned 8-bit integer.
 4. Packet length in number of payloads as unsigned 8-bit integer.
+
 There is no padding between the header and the first payload field.
 ### A Payload field
 Consists of these values, in order, starting from the 1st byte of the Payload.
@@ -74,7 +75,7 @@ Consists of these values, in order, starting from the 1st byte of the Payload.
     - 0: The value is a single bool, in the 8th bit of field 5. (i.e. least significant bit in the first byte)
     - 1: The value is a signed, 32-bit, little-endian integer, stored in field 5.
 4. The Unit ID of the value. This determines what phyiscal unit the value corresponds to.
-    - You can find a complete list of unit ids in [AnalogueCOEValue](crate::AnalogueCOEValue)
+    - You can find a complete list of unit ids in [`AnalogueCOEValue`](crate::AnalogueCOEValue)
     - Note that this ID also determines the decimal places to which the value is stored.
     - e.g.: The unit specifies 3 decimal places (Thousands) => a value of 10 on-wire corresponds to 0.010 in the appropriate unit.
 5. The value. Always 4-byte long. Either:
