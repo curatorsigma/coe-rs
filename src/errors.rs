@@ -1,3 +1,5 @@
+use alloc::string::String;
+
 #[derive(Debug,PartialEq)]
 pub enum ParseCOEError {
     NodeDisallowed(u8),

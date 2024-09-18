@@ -1,3 +1,10 @@
+#![cfg_attr(not(feature = "std"), no_std)]
+
+extern crate alloc;
+use alloc::vec;
+use alloc::vec::Vec;
+use alloc::format;
+
 pub mod errors;
 mod tests;
 
