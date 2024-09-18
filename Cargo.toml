@@ -15,8 +15,15 @@ unsafe_code = "forbid"
 
 [features]
 default = ["std"]
+
+# Implement std::error::Error for all Error types.
 std = ["alloc"]
+
+# Use Vec instead of statically sized buffer in Packet and implement Display for all Error types.
+# Also adds the packets_from_payloads function
 alloc = ["serde?/alloc"]
+
+# Enable SerDe for all public types.
 serde = ["dep:serde"]
 
 [dependencies]
