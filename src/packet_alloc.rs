@@ -75,6 +75,7 @@ impl Packet {
         }
     }
 
+    /// The number of payloads in this packet.
     pub fn len(&self) -> usize {
         self.payloads.len()
     }
