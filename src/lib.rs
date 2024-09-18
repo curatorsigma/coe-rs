@@ -342,6 +342,15 @@ impl TryFrom<&[u8]> for Payload {
         }
     }
 }
+impl core::default::Default for Payload {
+    fn default() -> Payload {
+        Payload {
+            node: 1,
+            pdo_index: 0,
+            value: COEValue::Analogue(AnalogueCOEValue::Dimensionless(0))
+        }
+    }
+}
 impl Payload {
     /// Create a new payload from the given destination and value.
     pub fn new(node: u8, pdo_index: u8, value: COEValue) -> Payload {
