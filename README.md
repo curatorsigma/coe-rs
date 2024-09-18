@@ -83,9 +83,6 @@ Consists of these values, in order, starting from the 1st byte of the Payload.
 `libcoe` in its current state is (apart from potential bugs I have not found yet) fully compliant to the CoEv2.0 Spec.
 CoEv1 is not currently implemented. If you need that protocol, consider opening a PR.
 
-## Why is libcoe not v1.0.0 yet?
-I have not yet integration-tested every potential value with a physical CMI. `libcoe` will go 1.0 when these tests are done.
-
 ## MSRV
 Minimum supported Rust version is `rustc 1.80.1`. Earlier versions of rustc may work, but they have not been tested.
 
