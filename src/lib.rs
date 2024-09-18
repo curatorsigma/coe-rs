@@ -23,6 +23,18 @@
 //! ```
 //!
 //! # Feature Flags
+//! The following feature flags are available:
+//! - `std`: This is the default feature set.
+//! - `serde`: This makes Packets, Paylods and Values Serializable with Serde.
+//!
+//! You can further opt-out of the default features with `default-features = false` your dependency listing for coe.
+//! This makes `coe` depend only on [core], for use in no_alloc / no_std environments.
+//! You can reenable the following feature flags
+//! - `alloc`: This switches the implementation for a Packet from a fixed-size buffer to a Vec,
+//! which is usually more memory-efficient. It also enables the [packets_from_payloads] function
+//! and implements Display for Error types.
+//! - Going from `alloc` to `std` implements [std::error::Error] on all Error types.
+//!
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
@@ -165,6 +177,8 @@ pub use packet_no_alloc::Packet;
 /// Convert a slice of [Payload]s into (possibly multiple) [Packet]s.
 ///
 /// This is infallible and always creates enough [Packet]s to pack all [Payload]s into.
+///
+/// This function is available only on the `alloc` feature flag.
 #[cfg(feature = "alloc")]
 pub fn packets_from_payloads(payloads: &[Payload]) -> Vec<Packet> {
     payloads
