@@ -1,3 +1,5 @@
+![cargo test](https://github.com/curatorsigma/coe-rs/actions/workflows/rust.yml/badge.svg)
+
 # libcoe
 `libcoe` is an implementation of the full CAN-over-Ethernet spec by Technische Alternative, written in 100% safe rust with a `no_std` version available.
 It allows safe (De-)serialization of COE packets from(into) bytes.
