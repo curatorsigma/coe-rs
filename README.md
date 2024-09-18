@@ -1,11 +1,11 @@
 ![cargo test](https://github.com/curatorsigma/coe-rs/actions/workflows/rust.yml/badge.svg)
 
-# libcoe
-`libcoe` is an implementation of the full CAN-over-Ethernet spec by Technische Alternative, written in 100% safe rust with a `no_std` version available.
+# coe-rs
+`coe-rs` is an implementation of the full CAN-over-Ethernet spec by Technische Alternative, written in 100% safe rust with a `no_std` version available.
 It allows safe (De-)serialization of COE packets from(into) bytes.
 
 # Getting started
-`libcoe` is as small as possible and only handles (De-)serialization of CoE packets.
+`coe-rs` is as small as possible and only handles (De-)serialization of CoE packets.
 To use the protocol over a network, consider this minimal example:
 ```rust
 #[tokio::main]
@@ -44,7 +44,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 }
 ```
 
-You can find a real-world application of `libcoe` in [churchtools-ta-sync](https://github.com/curatorsigma/churchtools-ta-sync).
+You can find a real-world application of `coe-rs` in [churchtools-ta-sync](https://github.com/curatorsigma/churchtools-ta-sync).
 Where we continually push data from an sqlite database to CMIs.
 
 # The CoE protocol
@@ -70,7 +70,7 @@ Consists of these values, in order, starting from the 1st byte of the Payload.
     - allowed values are 0-63
     - NOTE: The CMI web-gui shows these offset by 1.
     - e.g.: 2 on-wire == 3 in CMI-Web-GUI.
-    - `libcoe` DOES NOT add this offset. The calling application is responsible for handling the offset if required.
+    - `coe-rs` DOES NOT add this offset. The calling application is responsible for handling the offset if required.
 3. Unsigned 8-bit integer. Either:
     - 0: The value is a single bool, in the 8th bit of field 5. (i.e. least significant bit in the first byte)
     - 1: The value is a signed, 32-bit, little-endian integer, stored in field 5.
@@ -83,7 +83,7 @@ Consists of these values, in order, starting from the 1st byte of the Payload.
     - a signed, 32-bit, little-endian integer
 
 # Limitations and Stability
-`libcoe` in its current state is (apart from potential bugs I have not found yet) fully compliant to the CoEv2.0 Spec.
+`coe-rs` in its current state is (apart from potential bugs I have not found yet) fully compliant to the CoEv2.0 Spec.
 CoEv1 is not currently implemented. If you need that protocol, consider opening a PR.
 
 ## MSRV
