@@ -73,16 +73,20 @@ impl alloc::fmt::Display for ParseCOEError {
             Self::PDOIndexDisallowed(x) => {
                 write!(f, "The PDO Index must be in 0-63, but {} was supplied.", x)
             }
-            Self::FormatAndUnitIncompatible(format, unit) => {
-                match format {
-                    Format::Analogue => {
-                        write!(f, "The unit with ID {unit} is not known as an analogue value in CoE.")
-                    }
-                    Format::Digital =>  {
-                        write!(f, "The unit with ID {unit} is not known as a digital value in CoE.")
-                    }
+            Self::FormatAndUnitIncompatible(format, unit) => match format {
+                Format::Analogue => {
+                    write!(
+                        f,
+                        "The unit with ID {unit} is not known as an analogue value in CoE."
+                    )
                 }
-            }
+                Format::Digital => {
+                    write!(
+                        f,
+                        "The unit with ID {unit} is not known as a digital value in CoE."
+                    )
+                }
+            },
             Self::FormatUnknown(x) => {
                 write!(f, "The Format with ID {} is not known.", &x)
             }
@@ -361,7 +365,7 @@ impl core::default::Default for Payload {
         Payload {
             node: 1,
             pdo_index: 0,
-            value: COEValue::Analogue(AnalogueCOEValue::Dimensionless(0))
+            value: COEValue::Analogue(AnalogueCOEValue::Dimensionless(0)),
         }
     }
 }

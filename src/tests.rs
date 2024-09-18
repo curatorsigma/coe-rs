@@ -1300,7 +1300,10 @@ fn parse_value_digital_but_unit_is_analogue() {
     let value: Result<crate::DigitalCOEValue, _> = (&unit_id, &raw_bytes[0..4]).try_into();
     assert_eq!(
         value,
-        Err(crate::ParseCOEError::FormatAndUnitIncompatible(Format::Digital, 0))
+        Err(crate::ParseCOEError::FormatAndUnitIncompatible(
+            Format::Digital,
+            0
+        ))
     );
 }
 
@@ -1311,7 +1314,10 @@ fn parse_value_analogue_but_unit_is_digital() {
     let value: Result<crate::AnalogueCOEValue, _> = (&unit_id, &raw_bytes[0..4]).try_into();
     assert_eq!(
         value,
-        Err(crate::ParseCOEError::FormatAndUnitIncompatible(Format::Analogue, 43))
+        Err(crate::ParseCOEError::FormatAndUnitIncompatible(
+            Format::Analogue,
+            43
+        ))
     );
 }
 
@@ -1322,7 +1328,10 @@ fn parse_value_digital_unit_does_not_exist() {
     let value: Result<crate::DigitalCOEValue, _> = (&unit_id, &raw_bytes[0..4]).try_into();
     assert_eq!(
         value,
-        Err(crate::ParseCOEError::FormatAndUnitIncompatible(Format::Digital, 123))
+        Err(crate::ParseCOEError::FormatAndUnitIncompatible(
+            Format::Digital,
+            123
+        ))
     );
 }
 
@@ -1333,7 +1342,10 @@ fn parse_value_analogue_unit_does_not_exist() {
     let value: Result<crate::AnalogueCOEValue, _> = (&unit_id, &raw_bytes[0..4]).try_into();
     assert_eq!(
         value,
-        Err(crate::ParseCOEError::FormatAndUnitIncompatible(Format::Analogue, 123))
+        Err(crate::ParseCOEError::FormatAndUnitIncompatible(
+            Format::Analogue,
+            123
+        ))
     );
 }
 
