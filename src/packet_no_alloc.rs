@@ -52,14 +52,19 @@ impl TryFrom<&[u8]> for Packet {
         let mut idx = 0;
         for payload_nr in 0..value[3] {
             // each payload is exactly 8 bytes long - +4 is the header offset
-            let payload: Payload = value[(payload_nr * 8 + 4) as usize..=(payload_nr * 8 + 11) as usize].try_into()?;
+            let payload: Payload =
+                value[(payload_nr * 8 + 4) as usize..=(payload_nr * 8 + 11) as usize].try_into()?;
             payloads[idx] = payload;
             idx += 1;
         }
         // because we have checked that the packet length is consistent with the payload number
         // and that the actual packet size is as advertised in the header, we now that
         // idx can never be larger then 31, so this cast never looses information
-        Ok(Packet { version, payloads, payload_length: idx as u8 })
+        Ok(Packet {
+            version,
+            payloads,
+            payload_length: idx as u8,
+        })
     }
 }
 // the largest well-formed packet can be 4 + 31 * 8 bytes long (header + 31 Payloads of 8 byte
@@ -115,14 +120,12 @@ impl Packet {
     ///
     /// Fails if the final packet size would exceed 255 bytes (31 payloads).
     /// On failure, the packet was left unmodified.
-    pub fn try_append_from_slice(
-        &mut self,
-        payloads: &[Payload],
-    ) -> Option<()> {
+    pub fn try_append_from_slice(&mut self, payloads: &[Payload]) -> Option<()> {
         if (self.payload_length as usize + payloads.len()) * 8 + 4 >= u8::MAX as usize {
             return None;
         };
-        self.payloads[self.payload_length as usize..self.payload_length as usize + payloads.len()].clone_from_slice(payloads);
+        self.payloads[self.payload_length as usize..self.payload_length as usize + payloads.len()]
+            .clone_from_slice(payloads);
         self.payload_length += payloads.len() as u8;
         Some(())
     }
@@ -143,13 +146,17 @@ impl Packet {
 
         // the PAYLOAD
         // now set each individual payload
-        for (index, payload) in self.payloads.iter().enumerate().take_while(|(i, _)| *i < self.payload_length as usize) {
+        for (index, payload) in self
+            .payloads
+            .iter()
+            .enumerate()
+            .take_while(|(i, _)| *i < self.payload_length as usize)
+        {
             payload.serialize_into(&mut buf[4 + index * 8..=11 + index * 8]);
         }
         Some(4 + self.payloads.len() as usize * 8)
     }
 }
-
 
 mod test {
     #[test]
@@ -162,17 +169,15 @@ mod test {
             .expect("This Packet is parsable.");
         let mut payloads = [crate::Payload::default(); 31];
         payloads[0] = crate::Payload {
-                        node: 3,
-                        pdo_index: 0,
-                        value: crate::COEValue::Analogue(
-                            crate::AnalogueCOEValue::DegreeCentigrade_Tens(95)
-                        )
-                    };
+            node: 3,
+            pdo_index: 0,
+            value: crate::COEValue::Analogue(crate::AnalogueCOEValue::DegreeCentigrade_Tens(95)),
+        };
         payloads[1] = crate::Payload {
-                        node: 3,
-                        pdo_index: 0,
-                        value: crate::COEValue::Digital(crate::DigitalCOEValue::OnOff(true))
-                    };
+            node: 3,
+            pdo_index: 0,
+            value: crate::COEValue::Digital(crate::DigitalCOEValue::OnOff(true)),
+        };
         assert_eq!(
             packet,
             crate::Packet {
@@ -230,4 +235,3 @@ mod test {
         );
     }
 }
-

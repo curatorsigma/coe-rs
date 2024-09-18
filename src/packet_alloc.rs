@@ -80,7 +80,6 @@ impl Packet {
         self.payloads.len()
     }
 
-
     /// Create a [Packet] with [Payload]s. Fails if more then 31 payloads are given.
     pub fn try_from_payloads(payloads: &[Payload]) -> Option<Packet> {
         let mut p = Packet::new();
@@ -104,10 +103,7 @@ impl Packet {
     ///
     /// Fails if the final packet size would exceed 255 bytes (31 payloads).
     /// On failure, the packet was left unmodified.
-    pub fn try_append_from_slice(
-        &mut self,
-        payloads: &[Payload],
-    ) -> Option<()> {
+    pub fn try_append_from_slice(&mut self, payloads: &[Payload]) -> Option<()> {
         if (self.payloads.len() + payloads.len()) * 8 + 4 >= u8::MAX as usize {
             return None;
         };
@@ -216,4 +212,3 @@ mod test {
         );
     }
 }
-
