@@ -2,6 +2,16 @@
 name = "coe"
 version = "0.1.0"
 edition = "2021"
+license = "MIT-0"
+description = "coe is a full implementation of the CoEv2 protocol by Technische Alternative"
+repository = "https://github.com/curatorsigma/coe-rs"
+keywords = ["coe"]
+categories = ["network-programming"]
+authors = ["Jonathan Schleucher"]
+readme = "README.md"
+
+[lints.rust]
+unsafe_code = "forbid"
 
 [features]
 default = ["std"]
