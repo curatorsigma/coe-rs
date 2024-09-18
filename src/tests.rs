@@ -1,8 +1,9 @@
 #![cfg(test)]
 
 use crate::Packet;
-
-use super::errors;
+use crate::alloc::string::ToString;
+use alloc::vec::Vec;
+use alloc::vec;
 
 #[test]
 fn parse_value_00() {
@@ -693,14 +694,14 @@ fn parse_value_75() {
 fn parse_payload_frame_to_small() {
     let raw_bytes = [16, 8, 1, 0, 4, 0, 0];
     let payload: Result<crate::Payload, _> = raw_bytes[0..7].try_into();
-    assert_eq!(payload, Err(errors::ParseCOEError::PayloadFrameLengthIncorrect(7)));
+    assert_eq!(payload, Err(crate::ParseCOEError::PayloadFrameLengthIncorrect(7)));
 }
 
 #[test]
 fn parse_payload_frame_to_large() {
     let raw_bytes = [16, 8, 1, 0, 0, 4, 3, 2, 1, 0];
     let payload: Result<crate::Payload, _> = raw_bytes[0..10].try_into();
-    assert_eq!(payload, Err(errors::ParseCOEError::PayloadFrameLengthIncorrect(10)));
+    assert_eq!(payload, Err(crate::ParseCOEError::PayloadFrameLengthIncorrect(10)));
 }
 
 #[test]
@@ -708,7 +709,7 @@ fn parse_value_incorrect_length() {
     let unit_id = 0;
     let raw_bytes = [1, 0, 0, 4, 0];
     let value: Result<crate::AnalogueCOEValue, _> = (&unit_id, &raw_bytes[0..5]).try_into();
-    assert_eq!(value, Err(errors::ParseCOEError::ValueSize(5_usize)));
+    assert_eq!(value, Err(crate::ParseCOEError::ValueSize(5_usize)));
 }
 
 #[test]
@@ -716,7 +717,7 @@ fn parse_value_not_bool() {
     let unit_id = 43;
     let raw_bytes = [0, 0, 1, 0];
     let value: Result<crate::DigitalCOEValue, _> = (&unit_id, &raw_bytes[0..4]).try_into();
-    assert_eq!(value, Err(errors::ParseCOEError::ValueNotBool(raw_bytes)));
+    assert_eq!(value, Err(crate::ParseCOEError::ValueNotBool(raw_bytes)));
 }
 
 #[test]
@@ -724,7 +725,7 @@ fn parse_value_digital_but_unit_is_analogue() {
     let unit_id = 0;
     let raw_bytes = [1, 0, 0, 0];
     let value: Result<crate::DigitalCOEValue, _> = (&unit_id, &raw_bytes[0..4]).try_into();
-    assert_eq!(value, Err(errors::ParseCOEError::FormatAndUnitIncompatible("The Unit ID 0 is not known as a digital Unit.".to_string())));
+    assert_eq!(value, Err(crate::ParseCOEError::FormatAndUnitIncompatible("The Unit ID 0 is not known as a digital Unit.".to_string())));
 }
 
 #[test]
@@ -732,7 +733,7 @@ fn parse_value_analogue_but_unit_is_digital() {
     let unit_id = 43;
     let raw_bytes = [1, 0, 0, 0];
     let value: Result<crate::AnalogueCOEValue, _> = (&unit_id, &raw_bytes[0..4]).try_into();
-    assert_eq!(value, Err(errors::ParseCOEError::FormatAndUnitIncompatible("The Unit ID 43 is not known as an analogue Unit.".to_string())));
+    assert_eq!(value, Err(crate::ParseCOEError::FormatAndUnitIncompatible("The Unit ID 43 is not known as an analogue Unit.".to_string())));
 }
 
 #[test]
@@ -740,7 +741,7 @@ fn parse_value_digital_unit_does_not_exist() {
     let unit_id = 123;
     let raw_bytes = [1, 0, 0, 0];
     let value: Result<crate::DigitalCOEValue, _> = (&unit_id, &raw_bytes[0..4]).try_into();
-    assert_eq!(value, Err(errors::ParseCOEError::FormatAndUnitIncompatible("The Unit ID 123 is not known as a digital Unit.".to_string())));
+    assert_eq!(value, Err(crate::ParseCOEError::FormatAndUnitIncompatible("The Unit ID 123 is not known as a digital Unit.".to_string())));
 }
 
 #[test]
@@ -748,25 +749,25 @@ fn parse_value_analogue_unit_does_not_exist() {
     let unit_id = 123;
     let raw_bytes = [0, 0, 0, 1];
     let value: Result<crate::AnalogueCOEValue, _> = (&unit_id, &raw_bytes[0..4]).try_into();
-    assert_eq!(value, Err(errors::ParseCOEError::FormatAndUnitIncompatible("The Unit ID 123 is not known as an analogue Unit.".to_string())));
+    assert_eq!(value, Err(crate::ParseCOEError::FormatAndUnitIncompatible("The Unit ID 123 is not known as an analogue Unit.".to_string())));
 }
 
 #[test]
 fn parse_payload_node_to_small() {
     let raw_bytes = [0_u8, 8, 1, 75, 0, 0, 4, 0];
-    let error: errors::ParseCOEError = TryInto::<crate::Payload>::try_into(&raw_bytes[0..8]).expect_err("This Packet is not parsable.");
+    let error: crate::ParseCOEError = TryInto::<crate::Payload>::try_into(&raw_bytes[0..8]).expect_err("This Packet is not parsable.");
     assert_eq!(
         error,
-        errors::ParseCOEError::NodeDisallowed(0u8));
+        crate::ParseCOEError::NodeDisallowed(0u8));
 }
 
 #[test]
 fn parse_payload_node_to_large() {
     let raw_bytes = [63_u8, 8, 1, 75, 0, 0, 4, 0];
-    let error: errors::ParseCOEError = TryInto::<crate::Payload>::try_into(&raw_bytes[0..8]).expect_err("This Packet is not parsable.");
+    let error: crate::ParseCOEError = TryInto::<crate::Payload>::try_into(&raw_bytes[0..8]).expect_err("This Packet is not parsable.");
     assert_eq!(
         error,
-        errors::ParseCOEError::NodeDisallowed(63_u8));
+        crate::ParseCOEError::NodeDisallowed(63_u8));
 }
 
 
@@ -791,10 +792,10 @@ fn parse_payload_node_62() {
 #[test]
 fn parse_payload_pdo_to_large() {
     let raw_bytes = [12_u8, 64, 1, 75, 0, 4, 0, 0];
-    let error: errors::ParseCOEError = TryInto::<crate::Payload>::try_into(&raw_bytes[0..8]).expect_err("This Packet is not parsable.");
+    let error: crate::ParseCOEError = TryInto::<crate::Payload>::try_into(&raw_bytes[0..8]).expect_err("This Packet is not parsable.");
     assert_eq!(
         error,
-        errors::ParseCOEError::PDOIndexDisallowed(64_u8));
+        crate::ParseCOEError::PDOIndexDisallowed(64_u8));
 }
 
 #[test]
@@ -818,10 +819,10 @@ fn parse_payload_pdo_63() {
 #[test]
 fn parse_payload_format_unknown() {
     let raw_bytes = [12_u8, 4, 3, 75, 0, 4, 0, 0];
-    let error: errors::ParseCOEError = TryInto::<crate::Payload>::try_into(&raw_bytes[0..8]).expect_err("This Packet is not parsable.");
+    let error: crate::ParseCOEError = TryInto::<crate::Payload>::try_into(&raw_bytes[0..8]).expect_err("This Packet is not parsable.");
     assert_eq!(
         error,
-        errors::ParseCOEError::FormatUnknown(3_u8));
+        crate::ParseCOEError::FormatUnknown(3_u8));
 }
 
 #[test]
@@ -839,33 +840,33 @@ fn parse_packet_success() {
 #[test]
 fn parse_packet_below_header_length() {
     let raw_bytes = [2, 0, 20];
-    let err: errors::ParseCOEError = TryInto::<crate::Packet>::try_into(&raw_bytes[0..3]).expect_err("This Packet is not parsable.");
+    let err: crate::ParseCOEError = TryInto::<crate::Packet>::try_into(&raw_bytes[0..3]).expect_err("This Packet is not parsable.");
     assert_eq!(
-        err, errors::ParseCOEError::PacketBelowHeaderLength);
+        err, crate::ParseCOEError::PacketBelowHeaderLength);
 }
 
 #[test]
 fn parse_packet_packet_length_inconsistent() {
     let raw_bytes = [2, 0, 21, 2, 3, 0, 1, 1, 0, 0, 0, 95, 3, 0, 0, 43, 0, 0, 0, 1];
-    let err: errors::ParseCOEError = TryInto::<crate::Packet>::try_into(&raw_bytes[0..20]).expect_err("This Packet is not parsable");
+    let err: crate::ParseCOEError = TryInto::<crate::Packet>::try_into(&raw_bytes[0..20]).expect_err("This Packet is not parsable");
     assert_eq!(
-        err, errors::ParseCOEError::PacketLengthInconsistent(21_u8, 2_u8));
+        err, crate::ParseCOEError::PacketLengthInconsistent(21_u8, 2_u8));
 }
 
 #[test]
 fn parse_packet_packet_length_inconsistent_2() {
     let raw_bytes = [2, 0, 20, 3, 3, 0, 1, 1, 0, 0, 0, 95, 3, 0, 0, 43, 0, 0, 0, 1];
-    let err: errors::ParseCOEError = TryInto::<crate::Packet>::try_into(&raw_bytes[0..20]).expect_err("This Packet is not parsable");
+    let err: crate::ParseCOEError = TryInto::<crate::Packet>::try_into(&raw_bytes[0..20]).expect_err("This Packet is not parsable");
     assert_eq!(
-        err, errors::ParseCOEError::PacketLengthInconsistent(20_u8, 3_u8));
+        err, crate::ParseCOEError::PacketLengthInconsistent(20_u8, 3_u8));
 }
 
 #[test]
 fn parse_packet_packet_size_conflicts_with_header() {
     let raw_bytes = [2, 0, 12, 1, 3, 0, 1, 1, 0, 0, 0, 95, 3, 0, 0, 43, 0, 0, 0, 1];
-    let err: errors::ParseCOEError = TryInto::<crate::Packet>::try_into(&raw_bytes[0..20]).expect_err("This Packet is not parsable");
+    let err: crate::ParseCOEError = TryInto::<crate::Packet>::try_into(&raw_bytes[0..20]).expect_err("This Packet is not parsable");
     assert_eq!(
-        err, errors::ParseCOEError::PacketSizeConflictsWithHeader(12, 20));
+        err, crate::ParseCOEError::PacketSizeConflictsWithHeader(12, 20));
 }
 
 #[test]
@@ -880,8 +881,8 @@ fn parse_version_implemented() {
 fn parse_version_not_implemented() {
     let major = 0;
     let minor = 1;
-    let version: errors::ParseCOEError = TryInto::<crate::COEVersion>::try_into((major, minor)).expect_err("Version 0.1 is not implemented");
-    assert_eq!(version, errors::ParseCOEError::VersionNotImplemented(major, minor));
+    let version: crate::ParseCOEError = TryInto::<crate::COEVersion>::try_into((major, minor)).expect_err("Version 0.1 is not implemented");
+    assert_eq!(version, crate::ParseCOEError::VersionNotImplemented(major, minor));
 }
 
 #[test]
@@ -897,7 +898,7 @@ fn too_many_payloads() {
         let payload = crate::Payload{node: 16, pdo_index: 8, value: crate::COEValue::Analogue(crate::AnalogueCOEValue::Colon(256))};
         let payloads = [payload; 64];
         let res = Packet::try_from_payloads(&payloads);
-        assert_eq!(res, Err(crate::errors::PacketMaxPayloadsExceeded{}));
+        assert_eq!(res, Err(crate::PacketMaxPayloadsExceeded{}));
 }
 
 #[test]

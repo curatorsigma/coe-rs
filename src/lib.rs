@@ -1,13 +1,64 @@
 //! coe is a library that (De-)serializes CoE packets.
+//! The Protocol is owned by `Technische Alternative RT GmbH`.
+//!
+//! `coe` uses [std] by default to implement [std::error::Error] on all internal error types.
+//! If you need to use coe in a `no_std` environment, disable the default features.
 #![cfg_attr(not(feature = "std"), no_std)]
 
 extern crate alloc;
 use alloc::vec;
 use alloc::vec::Vec;
 use alloc::format;
+use alloc::string::String;
 
-pub mod errors;
 mod tests;
+
+#[derive(Debug,PartialEq)]
+pub enum ParseCOEError {
+    NodeDisallowed(u8),
+    PDOIndexDisallowed(u8),
+    FormatAndUnitIncompatible(String),
+    FormatUnknown(u8),
+    ValueSize(usize),
+    ValueNotBool([u8; 4]),
+    PacketBelowHeaderLength,
+    VersionNotImplemented(u8, u8),
+    PacketLengthInconsistent(u8, u8),
+    PacketSizeConflictsWithHeader(u8, usize),
+    PayloadFrameLengthIncorrect(usize),
+}
+#[cfg(feature = "std")]
+impl std::fmt::Display for ParseCOEError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            Self::NodeDisallowed(x) => { write!(f, "The Nodenumber must be in 1-62, but {} was supplied.", x) },
+            Self::PDOIndexDisallowed(x) => { write!(f, "The PDO Index must be in 0-63, but {} was supplied.", x) },
+            Self::FormatAndUnitIncompatible(x) => { write!(f, "FormatAndUnitIncompatible({x})") },
+            Self::FormatUnknown(x) => { write!(f, "The Format with ID {} is not known.", &x) },
+            Self::ValueSize(x) => { write!(f, "Slice containing COEValue was {x} bytes long. 4 expected.") },
+            Self::ValueNotBool(x) => { write!(f, "Expected Value to be bool because of Format/Unit, but got {x:?}.") },
+            Self::PacketBelowHeaderLength => { write!(f, "The packet is not at least 4 byte long.") },
+            Self::VersionNotImplemented(major, minor) => { write!(f, "Version {major}.{minor} is not implemented.") },
+            Self::PacketLengthInconsistent(size, length) => { write!(f, "The packet size ({size}) and payload length ({length}) are inconsistent.") },
+            Self::PacketSizeConflictsWithHeader(header, actual) => { write!(f, "The packet size should be {header} but is actually {actual}.") },
+            Self::PayloadFrameLengthIncorrect(actual) => { write!(f, "Got a payload from of length {actual}. 8 expected.") },
+        }
+    }
+}
+#[cfg(feature = "std")]
+impl std::error::Error for ParseCOEError {}
+
+#[derive(Debug,PartialEq)]
+pub struct PacketMaxPayloadsExceeded {}
+#[cfg(feature = "std")]
+impl std::fmt::Display for PacketMaxPayloadsExceeded {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "The maximal allowed number of payloads was exceeded.")
+    }
+}
+#[cfg(feature = "std")]
+impl std::error::Error for PacketMaxPayloadsExceeded {}
+
 
 // NOTE: We only implement CoE v2.0 for now.
 // Parsing a CoE packet of other versions will return an apropriate error.
@@ -27,7 +78,7 @@ pub struct Packet {
     payload: Vec<Payload>,
 }
 impl TryFrom<&[u8]> for Packet {
-    type Error = errors::ParseCOEError;
+    type Error = ParseCOEError;
     fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
         // the header must be four byte long
         if value.len() < 4 {
@@ -55,7 +106,7 @@ impl TryFrom<&[u8]> for Packet {
     }
 }
 impl From<Packet> for Vec<u8> {
-    /// Serialize a packet into Vec<u8>
+    /// Serialize a packet into `Vec<u8>`
     ///
     /// This is guaranteed to succeed since a Packet can never have more then 31 payloads, such
     /// that the resulting serialization will always be at most 255 bytes long.
@@ -89,7 +140,7 @@ impl Packet {
     }
 
     /// Create a packet with payloads. Fails if more then 31 payloads are given.
-    pub fn try_from_payloads(payloads: &[Payload]) -> Result<Packet, errors::PacketMaxPayloadsExceeded> {
+    pub fn try_from_payloads(payloads: &[Payload]) -> Result<Packet, PacketMaxPayloadsExceeded> {
         let mut p = Packet::new();
         p.try_append_from_slice(payloads)?;
         Ok(p)
@@ -99,9 +150,9 @@ impl Packet {
     ///
     /// Fails if the final packet size would exceed 255 bytes (31 payloads)
     /// On failure, the packet was left unmodified.
-    pub fn try_push(&mut self, payload: Payload) -> Result<(), errors::PacketMaxPayloadsExceeded> {
+    pub fn try_push(&mut self, payload: Payload) -> Result<(), PacketMaxPayloadsExceeded> {
         if self.payload.len() * 8 + 4 >= u8::MAX as usize {
-            return Err(errors::PacketMaxPayloadsExceeded { });
+            return Err(PacketMaxPayloadsExceeded { });
         };
         self.payload.push(payload);
         Ok(())
@@ -111,9 +162,9 @@ impl Packet {
     ///
     /// Fails if the final packet size would exceed 255 bytes (31 payloads)
     /// On failure, the packet was left unmodified.
-    pub fn try_append_from_slice(&mut self, payloads: &[Payload]) -> Result<(), errors::PacketMaxPayloadsExceeded> {
+    pub fn try_append_from_slice(&mut self, payloads: &[Payload]) -> Result<(), PacketMaxPayloadsExceeded> {
         if (self.payload.len() + payloads.len()) * 8 + 4 >= u8::MAX as usize {
-            return Err(errors::PacketMaxPayloadsExceeded {});
+            return Err(PacketMaxPayloadsExceeded {});
         };
         self.payload.extend_from_slice(payloads);
         Ok(())
@@ -140,7 +191,7 @@ struct COEVersion {
     minor: u8,
 }
 impl TryFrom<(u8, u8)> for COEVersion {
-    type Error = errors::ParseCOEError;
+    type Error = ParseCOEError;
     fn try_from(value: (u8, u8)) -> Result<Self, Self::Error> {
         // we only implement version 2.0 right now.
         if value.0 != 2 || value.1 != 0 {
@@ -166,7 +217,7 @@ pub struct Payload {
     value: COEValue,
 }
 impl TryFrom<&[u8]> for Payload {
-    type Error = errors::ParseCOEError;
+    type Error = ParseCOEError;
 
     fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
         // bound check the node and pdo_index values:
@@ -483,7 +534,7 @@ pub enum AnalogueCOEValue {
 
 /// Given the Format and raw value in bytes, try to create the AnalogueCOEValue
 impl TryFrom<(&u8, &[u8])> for AnalogueCOEValue {
-    type Error = errors::ParseCOEError;
+    type Error = ParseCOEError;
     fn try_from(value: (&u8, &[u8])) -> Result<Self, Self::Error> {
         let raw_bytes: [u8; 4] = value.1.try_into().map_err(|_| Self::Error::ValueSize(value.1.len()))?;
         let inner_value = i32::from_le_bytes(raw_bytes);
@@ -884,7 +935,7 @@ pub enum DigitalCOEValue {
 
 /// Given the Format and raw value in bytes, try to create the DigitalCOEValue 
 impl TryFrom<(&u8, &[u8])> for DigitalCOEValue {
-    type Error = errors::ParseCOEError;
+    type Error = ParseCOEError;
     fn try_from(value: (&u8, &[u8])) -> Result<Self, Self::Error> {
         if value.1.len() != 4 {
             return Err(Self::Error::ValueSize(value.1.len()));
