@@ -45,6 +45,7 @@ use alloc::{vec, vec::Vec};
 
 mod tests;
 
+/// The Format a COE Value can have.
 #[derive(Hash, Debug, PartialEq, Eq, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub enum Format {
