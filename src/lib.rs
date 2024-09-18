@@ -1,3 +1,4 @@
+//! coe is a library that (De-)serializes CoE packets.
 #![cfg_attr(not(feature = "std"), no_std)]
 
 extern crate alloc;
@@ -87,6 +88,7 @@ impl Packet {
         Packet { version: COEVersion { major: 2, minor: 0 }, payload: vec![] }
     }
 
+    /// Create a packet with payloads. Fails if more then 31 payloads are given.
     pub fn try_from_payloads(payloads: &[Payload]) -> Result<Packet, errors::PacketMaxPayloadsExceeded> {
         let mut p = Packet::new();
         p.try_append_from_slice(payloads)?;
@@ -118,6 +120,9 @@ impl Packet {
     }
 }
 
+/// Convert a slice of [Payload]s into (possibly multiple) [Packet]s.
+///
+/// This is infallible and always creates enough [Packet]s to pack all [Payload]s into.
 pub fn packets_from_payloads(payloads: &[Payload]) -> Vec<Packet> {
     payloads.chunks(31).map(|c| {
         Packet::try_from_payloads(c)
@@ -126,6 +131,7 @@ pub fn packets_from_payloads(payloads: &[Payload]) -> Vec<Packet> {
     .collect::<Vec<Packet>>()
 }
 
+/// The Version of COE protocol used.
 #[derive(Debug,PartialEq)]
 struct COEVersion {
     /// The major CoE Version. Only 2 is supported.
@@ -190,6 +196,7 @@ impl TryFrom<&[u8]> for Payload {
     }
 }
 impl Payload {
+    /// Create a new payload from the given destination and value.
     pub fn new(node: u8, pdo_index: u8, value: COEValue) -> Payload {
         Payload{node, pdo_index, value}
     }
@@ -209,9 +216,18 @@ impl Payload {
     }
 }
 
+/// Any Value that is representable in COE.
 #[derive(Debug,PartialEq,Copy,Clone)]
 pub enum COEValue {
+    /// An `analogue` Value.
+    ///
+    /// These are exactly the values which are represented as an i32 in the on-wire format.
+    /// They are also called analogue in TAPPS etc.
     Analogue(AnalogueCOEValue),
+    /// A `digital` Value.
+    ///
+    /// These are exactly the values which are represented as a bool in the on-wire format.
+    /// They are also called digital in TAPPS etc.
     Digital(DigitalCOEValue),
 }
 impl COEValue {
@@ -233,7 +249,144 @@ impl COEValue {
     }
 }
 
-/// All the different Values that CoE can transmit
+/// Convert a day and month into the internal format used in CoE.
+///
+/// NOTE: This does not check whether the month actually has that day.
+/// (e.g. this will allow the 30th of february)
+///
+/// Returns `None` when `day` or `month` are out of bounds.
+///
+/// Example:
+/// ```rust
+/// use coe::{AnalogueCOEValue, to_day_of_month};
+/// let val = to_day_of_month(17, 6);
+/// assert_eq!(val, Some(AnalogueCOEValue::DayOfMonth(171)));
+/// let val = to_day_of_month(58, 6);
+/// assert_eq!(val, None);
+/// let val = to_day_of_month(9, 14);
+/// assert_eq!(val, None);
+/// ```
+pub fn to_day_of_month(day: u8, month: u8) -> Option<AnalogueCOEValue> {
+    if day > 31 { return None; }
+    if month > 12 { return None; }
+    Some(AnalogueCOEValue::DayOfMonth((day - 1) as i32 + (month - 1) as i32 * 31))
+}
+
+/// The Errors that can occur when parsing an integer as day of month
+#[derive(Debug, PartialEq)]
+pub enum FromDayOfMonthError {
+    NotDayOfMonth,
+    ValueOutOfBounds(i32),
+}
+impl alloc::fmt::Display for FromDayOfMonthError {
+    fn fmt(&self, f: &mut alloc::fmt::Formatter) -> alloc::fmt::Result {
+        match self {
+            Self::NotDayOfMonth => write!(f, "Value was not DayOfMonth"),
+            Self::ValueOutOfBounds(x) => write!(f, "The Value {x} cannot be parsed as a day, month pair."),
+        }
+    }
+}
+#[cfg(feature="std")]
+impl std::error::Error for FromDayOfMonthError {}
+
+/// Convert the internal format for DayOfMonth into two u8s containing day and month
+///
+/// Example:
+/// ```rust
+/// use coe::{AnalogueCOEValue, from_day_of_month, FromDayOfMonthError};
+/// let val = from_day_of_month(AnalogueCOEValue::DayOfMonth(173));
+/// assert_eq!(val, Ok((19, 6)));
+/// let val = from_day_of_month(AnalogueCOEValue::DayOfMonth(-1234));
+/// assert_eq!(val, Err(FromDayOfMonthError::ValueOutOfBounds(-1234)));
+/// let val = from_day_of_month(AnalogueCOEValue::DegreeKelvin_Tens(123));
+/// assert_eq!(val, Err(FromDayOfMonthError::NotDayOfMonth));
+/// ```
+/// ```rust
+/// use coe::{AnalogueCOEValue, from_day_of_month, to_day_of_month};
+/// assert_eq!(from_day_of_month(to_day_of_month(9, 12).unwrap()), Ok((9, 12)));
+/// ```
+pub fn from_day_of_month(value: AnalogueCOEValue) -> Result<(u8, u8), FromDayOfMonthError> {
+    match value {
+        AnalogueCOEValue::DayOfMonth(x) => {
+            if x < 0 || x > 30 + 31 * 11 {
+                Err(FromDayOfMonthError::ValueOutOfBounds(x))
+            } else {
+                Ok(((1 + x % 31).try_into().expect("Modulo 31 yields u8"), (1 + x / 31).try_into().expect("Length was checked before")))
+            }
+        }
+        _ =>  {
+            Err(FromDayOfMonthError::NotDayOfMonth)
+        }
+    }
+}
+
+/// Convert a month and year into the internal format used in CoE.
+///
+/// Returns `None` when `month` is out of bounds.
+///
+/// Example:
+/// ```rust
+/// use coe::{AnalogueCOEValue, to_month_of_year};
+/// let val = to_month_of_year(8, 1852);
+/// assert_eq!(val, Some(AnalogueCOEValue::MonthOfYear(22231)));
+/// let val = to_month_of_year(58, 6);
+/// assert_eq!(val, None);
+/// ```
+pub fn to_month_of_year(month: u8, year: u16) -> Option<AnalogueCOEValue> {
+    if month > 12 { return None; }
+    Some(AnalogueCOEValue::MonthOfYear((month - 1) as i32 + year as i32 * 12))
+}
+
+/// The Errors that can occur when parsing an integer as day of month
+#[derive(Debug, PartialEq)]
+pub enum FromMonthOfYearError {
+    NotMonthOfYear,
+    ValueOutOfBounds(i32),
+}
+impl alloc::fmt::Display for FromMonthOfYearError {
+    fn fmt(&self, f: &mut alloc::fmt::Formatter) -> alloc::fmt::Result {
+        match self {
+            Self::NotMonthOfYear => write!(f, "Value was not MonthOfYear"),
+            Self::ValueOutOfBounds(x) => write!(f, "The Value {x} cannot be parsed as a month, year pair."),
+        }
+    }
+}
+#[cfg(feature="std")]
+impl std::error::Error for FromMonthOfYearError {}
+
+/// Convert the internal format for MonthOfYear into a u8 and u16 containing month and year
+///
+/// Example:
+/// ```rust
+/// use coe::{AnalogueCOEValue, from_month_of_year, FromMonthOfYearError};
+/// let val = from_month_of_year(AnalogueCOEValue::MonthOfYear(22231));
+/// assert_eq!(val, Ok((8, 1852)));
+/// let val = from_month_of_year(AnalogueCOEValue::MonthOfYear(13 * u16::MAX as i32));
+/// assert_eq!(val, Err(FromMonthOfYearError::ValueOutOfBounds(13 * u16::MAX as i32)));
+/// let val = from_month_of_year(AnalogueCOEValue::DegreeKelvin_Tens(123));
+/// assert_eq!(val, Err(FromMonthOfYearError::NotMonthOfYear));
+/// ```
+/// ```rust
+/// use coe::{AnalogueCOEValue, from_month_of_year, to_month_of_year};
+/// assert_eq!(from_month_of_year(to_month_of_year(5, 325).unwrap()), Ok((5, 325)));
+/// ```
+pub fn from_month_of_year(value: AnalogueCOEValue) -> Result<(u8, u16), FromMonthOfYearError> {
+    match value {
+        AnalogueCOEValue::MonthOfYear(x) => {
+            if x < 0 || x > 11 + 12 * u16::MAX as i32 {
+                Err(FromMonthOfYearError::ValueOutOfBounds(x))
+            } else {
+                Ok(((1 + x % 12).try_into().expect("Modulo 12 yields u8"), (x / 12).try_into().expect("Length was checked before")))
+            }
+        }
+        _ =>  {
+            Err(FromMonthOfYearError::NotMonthOfYear)
+        }
+    }
+}
+
+
+/// All the different analogue values representable in CoE.
 /// Ordering (and therefore numbering) is the one used internally in the CoE spec.
 #[repr(u8)]
 // We allow non_camel_case_types here, so that we can better separate the comma position from the
@@ -267,7 +420,7 @@ pub enum AnalogueCOEValue {
     Bar_Hundreds(i32) = 23,
     CoefficientOfPerformance_Hundreds(i32) = 24,
     KiloMeter(i32) = 25,
-    Meter(i32) = 26,
+    Meter_Tens(i32) = 26,
     MilliMeter(i32) = 27,
     CubicMeter(i32) = 28,
     HertzPerKiloMeterPerHour_HundredThousands(i32) = 29,
@@ -282,12 +435,10 @@ pub enum AnalogueCOEValue {
     CubicMeterPerMinute(i32) = 37,
     CubicMeterPerHour(i32) = 38,
     CubicMeterPerDay(i32) = 39,
-    MilliMeterPerMinute(i32) = 40,
-    MilliMeterPerHour(i32) = 41,
-    MilliMeterPerDay(i32) = 42,
-    RASMode(i32) = 45,
+    MilliMeterPerMinute_Tens(i32) = 40,
+    MilliMeterPerHour_Tens(i32) = 41,
+    MilliMeterPerDay_Tens(i32) = 42,
     DegreeCentigradePlusRAS_Tens(i32) = 46,
-    Mixer(i32) = 47,
     HeatingCircuitOpMode(i32) = 48,
     HeatingCircuitOpLevel(i32) = 49,
     CurrencyEuro_Hundreds(i32) = 50,
@@ -300,10 +451,22 @@ pub enum AnalogueCOEValue {
     Second_Tens(i32) = 57,
     Dimensionless_Tens(i32) = 58,
     BlindsPosition(i32) = 59,
+    /// Time, in minutes, represented as HH:MM
     Time(i32) = 60,
+    /// Day of month.
+    /// DayOfMonth(day - 1 + 31 * (month - 1))
+    /// corresponds to the day in month
+    ///
+    /// Consider using the helper functions [from_day_of_month] and [to_day_of_month]
     DayOfMonth(i32) = 61,
-    Date(i32) = 62,
+    /// Date, as:
+    /// days
+    /// months
+    /// years
+    Date(u8, u8, u16) = 62,
     Ampere_Tens(i32) = 63,
+    /// Month + Year im format
+    /// MonthOfYear(year * 12 + month)
     MonthOfYear(i32) = 64,
     Millibar_Tens(i32) = 65,
     Pascal(i32) = 66,
@@ -323,7 +486,6 @@ impl TryFrom<(&u8, &[u8])> for AnalogueCOEValue {
     type Error = errors::ParseCOEError;
     fn try_from(value: (&u8, &[u8])) -> Result<Self, Self::Error> {
         let raw_bytes: [u8; 4] = value.1.try_into().map_err(|_| Self::Error::ValueSize(value.1.len()))?;
-        // TODO: the specs do not specify endianness of the i32
         let inner_value = i32::from_le_bytes(raw_bytes);
         match value.0 {
             0 => Ok(Self::Dimensionless(inner_value)),
@@ -352,7 +514,7 @@ impl TryFrom<(&u8, &[u8])> for AnalogueCOEValue {
             23 => Ok(Self::Bar_Hundreds(inner_value)),
             24 => Ok(Self::CoefficientOfPerformance_Hundreds(inner_value)),
             25 => Ok(Self::KiloMeter(inner_value)),
-            26 => Ok(Self::Meter(inner_value)),
+            26 => Ok(Self::Meter_Tens(inner_value)),
             27 => Ok(Self::MilliMeter(inner_value)),
             28 => Ok(Self::CubicMeter(inner_value)),
             29 => Ok(Self::HertzPerKiloMeterPerHour_HundredThousands(inner_value)),
@@ -366,12 +528,10 @@ impl TryFrom<(&u8, &[u8])> for AnalogueCOEValue {
             37 => Ok(Self::CubicMeterPerMinute(inner_value)),
             38 => Ok(Self::CubicMeterPerHour(inner_value)),
             39 => Ok(Self::CubicMeterPerDay(inner_value)),
-            40 => Ok(Self::MilliMeterPerMinute(inner_value)),
-            41 => Ok(Self::MilliMeterPerHour(inner_value)),
-            42 => Ok(Self::MilliMeterPerDay(inner_value)),
-            45 => Ok(Self::RASMode(inner_value)),
+            40 => Ok(Self::MilliMeterPerMinute_Tens(inner_value)),
+            41 => Ok(Self::MilliMeterPerHour_Tens(inner_value)),
+            42 => Ok(Self::MilliMeterPerDay_Tens(inner_value)),
             46 => Ok(Self::DegreeCentigradePlusRAS_Tens(inner_value)),
-            47 => Ok(Self::Mixer(inner_value)),
             48 => Ok(Self::HeatingCircuitOpMode(inner_value)),
             49 => Ok(Self::HeatingCircuitOpLevel(inner_value)),
             50 => Ok(Self::CurrencyEuro_Hundreds(inner_value)),
@@ -386,7 +546,13 @@ impl TryFrom<(&u8, &[u8])> for AnalogueCOEValue {
             59 => Ok(Self::BlindsPosition(inner_value)),
             60 => Ok(Self::Time(inner_value)),
             61 => Ok(Self::DayOfMonth(inner_value)),
-            62 => Ok(Self::Date(inner_value)),
+            62 => {
+                let bytes = inner_value.to_le_bytes();
+                let days = bytes[0];
+                let months = bytes[1];
+                let years: u16 = (bytes[2] as u16) + 256 * (bytes[3] as u16);
+                Ok(Self::Date(days, months, years))
+            },
             63 => Ok(Self::Ampere_Tens(inner_value)),
             64 => Ok(Self::MonthOfYear(inner_value)),
             65 => Ok(Self::Millibar_Tens(inner_value)),
@@ -514,7 +680,7 @@ impl AnalogueCOEValue {
                 buf[0] = 25;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
             },
-            Self::Meter(x) => {
+            Self::Meter_Tens(x) => {
                 buf[0] = 26;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
             },
@@ -570,28 +736,20 @@ impl AnalogueCOEValue {
                 buf[0] = 39;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
             },
-            Self::MilliMeterPerMinute(x) => {
+            Self::MilliMeterPerMinute_Tens(x) => {
                 buf[0] = 40;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
             },
-            Self::MilliMeterPerHour(x) => {
+            Self::MilliMeterPerHour_Tens(x) => {
                 buf[0] = 41;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
             },
-            Self::MilliMeterPerDay(x) => {
+            Self::MilliMeterPerDay_Tens(x) => {
                 buf[0] = 42;
-                buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
-            Self::RASMode(x) => {
-                buf[0] = 45;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
             },
             Self::DegreeCentigradePlusRAS_Tens(x) => {
                 buf[0] = 46;
-                buf[1..5].copy_from_slice(&x.to_le_bytes());
-            },
-            Self::Mixer(x) => {
-                buf[0] = 47;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
             },
             Self::HeatingCircuitOpMode(x) => {
@@ -650,9 +808,11 @@ impl AnalogueCOEValue {
                 buf[0] = 61;
                 buf[1..5].copy_from_slice(&x.to_le_bytes());
             },
-            Self::Date(x) => {
+            Self::Date(days, months, years) => {
                 buf[0] = 62;
-                buf[1..5].copy_from_slice(&x.to_le_bytes());
+                buf[1] = *days;
+                buf[2] = *months;
+                buf[3..5].copy_from_slice(&years.to_le_bytes());
             },
             Self::Ampere_Tens(x) => {
                 buf[0] = 63;
@@ -710,12 +870,16 @@ impl AnalogueCOEValue {
     }
 }
 
+/// Representation of all existing digital values representable in COE
 #[repr(u8)]
 #[derive(PartialEq,Clone,Copy,Debug)]
 pub enum DigitalCOEValue {
-    DigitalOnOff(bool) = 43,
-    // TODO: is true == YES or true == NO here??
-    DigitalNoYes(bool) = 44,
+    OnOff(bool) = 43,
+    YesNo(bool) = 44,
+    RASMode(bool) = 45,
+    // true == Normal
+    // false == AUS
+    Mixer(bool) = 47,
 }
 
 /// Given the Format and raw value in bytes, try to create the DigitalCOEValue 
@@ -735,8 +899,10 @@ impl TryFrom<(&u8, &[u8])> for DigitalCOEValue {
             _ => { return Err(Self::Error::ValueNotBool(value.1.try_into().expect("I already asserted that value.1 has four elements."))); },
         };
         match value.0 {
-            43 => Ok(Self::DigitalOnOff(inner_bool)),
-            44 => Ok(Self::DigitalNoYes(inner_bool)),
+            43 => Ok(Self::OnOff(inner_bool)),
+            44 => Ok(Self::YesNo(inner_bool)),
+            45 => Ok(Self::RASMode(inner_bool)),
+            47 => Ok(Self::Mixer(inner_bool)),
             m => Err(Self::Error::FormatAndUnitIncompatible(format!("The Unit ID {m} is not known as a digital Unit."))),
         }
     }
@@ -748,12 +914,20 @@ impl DigitalCOEValue {
     fn serialize_into(&self, buf: &mut [u8]) {
         assert_eq!(buf.len(), 5);
         match self {
-            Self::DigitalOnOff(x) => {
+            Self::OnOff(x) => {
                 buf[0] = 43;
                 buf[1] = *x as u8;
             },
-            Self::DigitalNoYes(x) => {
+            Self::YesNo(x) => {
                 buf[0] = 44;
+                buf[1] = *x as u8;
+            },
+            Self::RASMode(x) => {
+                buf[0] = 45;
+                buf[1] = *x as u8;
+            },
+            Self::Mixer(x) => {
+                buf[0] = 47;
                 buf[1] = *x as u8;
             },
         };

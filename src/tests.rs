@@ -244,7 +244,7 @@ fn parse_value_26() {
     let payload: crate::Payload = raw_bytes[0..8].try_into().expect("This Packet is parsable.");
     assert_eq!(
         payload,
-        crate::Payload{node: 16, pdo_index: 8, value: crate::COEValue::Analogue(crate::AnalogueCOEValue::Meter(4 * 256))});
+        crate::Payload{node: 16, pdo_index: 8, value: crate::COEValue::Analogue(crate::AnalogueCOEValue::Meter_Tens(4 * 256))});
 }
 
 #[test]
@@ -370,7 +370,7 @@ fn parse_value_40() {
     let payload: crate::Payload = raw_bytes[0..8].try_into().expect("This Packet is parsable.");
     assert_eq!(
         payload,
-        crate::Payload{node: 16, pdo_index: 8, value: crate::COEValue::Analogue(crate::AnalogueCOEValue::MilliMeterPerMinute(4 * 256))});
+        crate::Payload{node: 16, pdo_index: 8, value: crate::COEValue::Analogue(crate::AnalogueCOEValue::MilliMeterPerMinute_Tens(4 * 256))});
 }
 
 #[test]
@@ -379,7 +379,7 @@ fn parse_value_41() {
     let payload: crate::Payload = raw_bytes[0..8].try_into().expect("This Packet is parsable.");
     assert_eq!(
         payload,
-        crate::Payload{node: 16, pdo_index: 8, value: crate::COEValue::Analogue(crate::AnalogueCOEValue::MilliMeterPerHour(4 * 256))});
+        crate::Payload{node: 16, pdo_index: 8, value: crate::COEValue::Analogue(crate::AnalogueCOEValue::MilliMeterPerHour_Tens(4 * 256))});
 }
 
 #[test]
@@ -388,7 +388,7 @@ fn parse_value_42() {
     let payload: crate::Payload = raw_bytes[0..8].try_into().expect("This Packet is parsable.");
     assert_eq!(
         payload,
-        crate::Payload{node: 16, pdo_index: 8, value: crate::COEValue::Analogue(crate::AnalogueCOEValue::MilliMeterPerDay(4 * 256))});
+        crate::Payload{node: 16, pdo_index: 8, value: crate::COEValue::Analogue(crate::AnalogueCOEValue::MilliMeterPerDay_Tens(4 * 256))});
 }
 
 #[test]
@@ -397,7 +397,7 @@ fn parse_value_43() {
     let payload: crate::Payload = raw_bytes[0..8].try_into().expect("This Packet is parsable.");
     assert_eq!(
         payload,
-        crate::Payload{node: 16, pdo_index: 8, value: crate::COEValue::Digital(crate::DigitalCOEValue::DigitalOnOff(false))});
+        crate::Payload{node: 16, pdo_index: 8, value: crate::COEValue::Digital(crate::DigitalCOEValue::OnOff(false))});
 }
 
 #[test]
@@ -406,16 +406,16 @@ fn parse_value_44() {
     let payload: crate::Payload = raw_bytes[0..8].try_into().expect("This Packet is parsable.");
     assert_eq!(
         payload,
-        crate::Payload{node: 1, pdo_index: 63, value: crate::COEValue::Digital(crate::DigitalCOEValue::DigitalNoYes(true))});
+        crate::Payload{node: 1, pdo_index: 63, value: crate::COEValue::Digital(crate::DigitalCOEValue::YesNo(true))});
 }
 
 #[test]
 fn parse_value_45() {
-    let raw_bytes = [16, 8, 1, 45, 0, 4, 0, 0];
+    let raw_bytes = [16, 8, 0, 45, 1, 0, 0, 0];
     let payload: crate::Payload = raw_bytes[0..8].try_into().expect("This Packet is parsable.");
     assert_eq!(
         payload,
-        crate::Payload{node: 16, pdo_index: 8, value: crate::COEValue::Analogue(crate::AnalogueCOEValue::RASMode(4 * 256))});
+        crate::Payload{node: 16, pdo_index: 8, value: crate::COEValue::Digital(crate::DigitalCOEValue::RASMode(true))});
 }
 
 #[test]
@@ -429,11 +429,11 @@ fn parse_value_46() {
 
 #[test]
 fn parse_value_47() {
-    let raw_bytes = [16, 8, 1, 47, 1, 0, 0, 0];
+    let raw_bytes = [16, 8, 0, 47, 0, 0, 0, 0];
     let payload: crate::Payload = raw_bytes[0..8].try_into().expect("This Packet is parsable.");
     assert_eq!(
         payload,
-        crate::Payload{node: 16, pdo_index: 8, value: crate::COEValue::Analogue(crate::AnalogueCOEValue::Mixer(1))});
+        crate::Payload{node: 16, pdo_index: 8, value: crate::COEValue::Digital(crate::DigitalCOEValue::Mixer(false))});
 }
 
 #[test]
@@ -564,11 +564,11 @@ fn parse_value_61() {
 
 #[test]
 fn parse_value_62() {
-    let raw_bytes = [16, 8, 1, 62, 0, 4, 0, 0];
+    let raw_bytes = [16, 8, 1, 62, 29, 5, 173, 5];
     let payload: crate::Payload = raw_bytes[0..8].try_into().expect("This Packet is parsable.");
     assert_eq!(
         payload,
-        crate::Payload{node: 16, pdo_index: 8, value: crate::COEValue::Analogue(crate::AnalogueCOEValue::Date(4 * 256))});
+        crate::Payload{node: 16, pdo_index: 8, value: crate::COEValue::Analogue(crate::AnalogueCOEValue::Date(29, 5, 1453))});
 }
 
 #[test]
@@ -833,7 +833,7 @@ fn parse_packet_success() {
         crate::Packet{
             version: crate::COEVersion{ major: 2, minor: 0}, 
             payload: vec![crate::Payload{node: 3, pdo_index: 0, value: crate::COEValue::Analogue(crate::AnalogueCOEValue::DegreeCentigrade_Tens(95))},
-                          crate::Payload{node: 3, pdo_index: 0, value: crate::COEValue::Digital(crate::DigitalCOEValue::DigitalOnOff(true))}]});
+                          crate::Payload{node: 3, pdo_index: 0, value: crate::COEValue::Digital(crate::DigitalCOEValue::OnOff(true))}]});
 }
 
 #[test]
