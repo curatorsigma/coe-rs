@@ -15,7 +15,8 @@ unsafe_code = "forbid"
 
 [features]
 default = ["std"]
-std = []
+std = ["alloc"]
+alloc = ["serde?/alloc"]
 serde = ["dep:serde"]
 
 [dependencies]

@@ -21,11 +21,10 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+#[cfg(feature = "alloc")]
 extern crate alloc;
-use alloc::format;
-use alloc::string::String;
-use alloc::vec;
-use alloc::vec::Vec;
+#[cfg(feature = "alloc")]
+use alloc::{vec, vec::Vec, format, string::String};
 
 mod tests;
 
@@ -56,9 +55,8 @@ pub enum ParseCOEError {
     /// Got a payload frame that is not 8 bytes long.
     PayloadFrameLengthIncorrect(usize),
 }
-#[cfg(feature = "std")]
-impl std::fmt::Display for ParseCOEError {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+impl alloc::fmt::Display for ParseCOEError {
+    fn fmt(&self, f: &mut alloc::fmt::Formatter) -> alloc::fmt::Result {
         match self {
             Self::NodeDisallowed(x) => {
                 write!(f, "The Nodenumber must be in 1-62, but {} was supplied.", x)
