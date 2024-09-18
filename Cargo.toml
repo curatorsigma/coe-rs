@@ -6,7 +6,7 @@ license = "MIT-0"
 description = "coe is a full implementation of the CoEv2 protocol by Technische Alternative"
 repository = "https://github.com/curatorsigma/coe-rs"
 keywords = ["coe"]
-categories = ["network-programming"]
+categories = ["network-programming", "no-std"]
 authors = ["Jonathan Schleucher"]
 readme = "README.md"
 
