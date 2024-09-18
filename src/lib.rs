@@ -276,6 +276,7 @@ impl Packet {
 /// Convert a slice of [Payload]s into (possibly multiple) [Packet]s.
 ///
 /// This is infallible and always creates enough [Packet]s to pack all [Payload]s into.
+#[cfg(feature = "alloc")]
 pub fn packets_from_payloads(payloads: &[Payload]) -> Vec<Packet> {
     payloads
         .chunks(31)
