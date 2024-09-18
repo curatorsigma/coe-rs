@@ -187,7 +187,7 @@ impl From<Packet> for Vec<u8> {
             .len()
             .try_into()
             .expect("Packet is larger then the largest possible COE frame allows.");
-        let package_size: u8 = (payload_length * 8 + 4)
+        let package_size: u8 = (payload_length as u16 * 8 + 4)
             .try_into()
             .expect("Packet is larger then the largest possible COE frame allows.");
 
