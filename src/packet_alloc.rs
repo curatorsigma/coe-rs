@@ -4,11 +4,15 @@ use super::*;
 
 /// A COE Packet
 ///
-/// Note: we enforce and assume that `payload.len()` never exceeds 31.
-/// This is required, because the packet contains its own size (in bytes) in a field containing a
-/// u8, so no more then 255 (`u8::MAX`) bytes may ever be contained in a packets full representation.
-/// The packet on wire contains 4 bytes of headers, leaving us with 251 usable bytes. A payload
-/// length of 8 byte per payload yields 31 full payloads that fit in the max packet length.
+/// This models every possible Packet that can be send via CoE.
+/// It consists mostly of [Payload]s, which can be added by different means.
+/// Note that a Packet can at most contain 31 Payloads, so that all methods adding new Payloads can
+/// fail.
+// Note: we enforce and assume that `payload.len()` never exceeds 31.
+// This is required, because the packet contains its own size (in bytes) in a field containing a
+// u8, so no more then 255 (`u8::MAX`) bytes may ever be contained in a packets full representation.
+// The packet on wire contains 4 bytes of headers, leaving us with 251 usable bytes. A payload
+// length of 8 byte per payload yields 31 full payloads that fit in the max packet length.
 #[derive(Hash, Debug, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub struct Packet {
@@ -56,31 +60,9 @@ impl From<Packet> for Vec<u8> {
     /// This is guaranteed to succeed since a Packet can never have more then 31 payloads, such
     /// that the resulting serialization will always be at most 255 bytes long.
     fn from(value: Packet) -> Self {
-        // precalculate the package size so we can allocate exactly the correct vector length
-        let payload_length: u8 = value
-            .payloads
-            .len()
-            .try_into()
-            .expect("Packet is larger then the largest possible COE frame allows.");
-        let package_size: u8 = (payload_length as u16 * 8 + 4)
-            .try_into()
-            .expect("Packet is larger then the largest possible COE frame allows.");
-
-        // we initialize this vector to all 0 and thus satisfy the requirements for
-        // payloads.serialize_into
-        let mut res: Vec<u8> = vec![0; package_size as usize];
-
-        // the HEADER
-        res[0] = value.version.major;
-        res[1] = value.version.minor;
-        res[2] = package_size;
-        res[3] = payload_length;
-
-        // the PAYLOAD
-        // now set each individual payload
-        for (index, payload) in value.payloads.iter().enumerate() {
-            payload.serialize_into(&mut res[4 + index * 8..=11 + index * 8]);
-        }
+        let mut res = vec![0_u8; 4 + value.payloads.len() * 8];
+        // Packet always successfully serializes, since we set the size correctly
+        value.try_serialize_into(&mut res).unwrap();
         return res;
     }
 }
@@ -92,6 +74,11 @@ impl Packet {
             payloads: vec![],
         }
     }
+
+    pub fn len(&self) -> usize {
+        self.payloads.len()
+    }
+
 
     /// Create a [Packet] with [Payload]s. Fails if more then 31 payloads are given.
     pub fn try_from_payloads(payloads: &[Payload]) -> Result<Packet, PacketMaxPayloadsExceeded> {
@@ -126,8 +113,29 @@ impl Packet {
         self.payloads.extend_from_slice(payloads);
         Ok(())
     }
-}
 
+    /// Serialize this Packet into a `&[u8]` which can be sent on-the-wire.
+    ///
+    /// This can fail if buf is to small, in which case `None` is returned.
+    /// Otherwise, return the amount of bytes written into `buf`.
+    pub fn try_serialize_into(&self, buf: &mut [u8]) -> Option<usize> {
+        if buf.len() < 4 + self.payloads.len() as usize * 8 {
+            return None;
+        };
+        // the HEADER
+        buf[0] = self.version.major;
+        buf[1] = self.version.minor;
+        buf[2] = 4 + self.payloads.len() as u8 * 8;
+        buf[3] = self.payloads.len() as u8;
+
+        // the PAYLOAD
+        // now set each individual payload
+        for (index, payload) in self.payloads.iter().enumerate() {
+            payload.serialize_into(&mut buf[4 + index * 8..=11 + index * 8]);
+        }
+        Some(4 + self.payloads.len() as usize * 8)
+    }
+}
 
 mod test {
     #[test]

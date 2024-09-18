@@ -1468,7 +1468,6 @@ fn parse_version_not_implemented() {
 }
 
 #[test]
-#[cfg(feature = "alloc")]
 fn deser_ser() {
     let raw_bytes = [
         2, 0, 20, 2, 3, 0, 1, 1, 95, 0, 0, 0, 3, 0, 0, 43, 1, 0, 0, 0,
@@ -1476,7 +1475,9 @@ fn deser_ser() {
     let packet: crate::Packet = raw_bytes[0..20]
         .try_into()
         .expect("This Packet is parsable.");
-    let re_serialized: Vec<u8> = packet.into();
+    assert_eq!(packet.len(), 2);
+    let mut re_serialized = [0_u8; 20];
+    packet.try_serialize_into(&mut re_serialized).unwrap();
     assert_eq!(re_serialized, raw_bytes);
 }
 

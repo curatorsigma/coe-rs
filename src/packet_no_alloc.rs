@@ -4,11 +4,15 @@ use super::*;
 
 /// A COE Packet
 ///
-/// Note: we enforce and assume that `payload_length` never exceeds 31.
-/// This is required, because the packet contains its own size (in bytes) in a field containing a
-/// u8, so no more then 255 (`u8::MAX`) bytes may ever be contained in a packets full representation.
-/// The packet on wire contains 4 bytes of headers, leaving us with 251 usable bytes. A payload
-/// length of 8 byte per payload yields 31 full payloads that fit in the max packet length.
+/// This models every possible Packet that can be send via CoE.
+/// It consists mostly of [Payload]s, which can be added by different means.
+/// Note that a Packet can at most contain 31 Payloads, so that all methods adding new Payloads can
+/// fail.
+// Note: we enforce and assume that `payload_length` never exceeds 31.
+// This is required, because the packet contains its own size (in bytes) in a field containing a
+// u8, so no more then 255 (`u8::MAX`) bytes may ever be contained in a packets full representation.
+// The packet on wire contains 4 bytes of headers, leaving us with 251 usable bytes. A payload
+// length of 8 byte per payload yields 31 full payloads that fit in the max packet length.
 #[derive(Hash, Debug, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub struct Packet {
@@ -67,17 +71,8 @@ impl From<Packet> for [u8; 4 + 8 * 31] {
     /// that the resulting serialization will always be at most 255 bytes long.
     fn from(value: Packet) -> Self {
         let mut res = [0_u8; 4 + 8 * 31];
-        // the HEADER
-        res[0] = value.version.major;
-        res[1] = value.version.minor;
-        res[2] = 4 + value.payload_length * 8;
-        res[3] = value.payload_length;
-
-        // the PAYLOAD
-        // now set each individual payload
-        for (index, payload) in value.payloads.iter().enumerate() {
-            payload.serialize_into(&mut res[4 + index * 8..=11 + index * 8]);
-        }
+        // Packet always successfully serializes into a 252-byte array.
+        value.try_serialize_into(&mut res).unwrap();
         return res;
     }
 }
@@ -89,6 +84,10 @@ impl Packet {
             payloads: [Payload::default(); 31],
             payload_length: 0,
         }
+    }
+
+    pub fn len(&self) -> usize {
+        self.payload_length.into()
     }
 
     /// Create a [Packet] with [Payload]s. Fails if more then 31 payloads are given.
@@ -126,6 +125,28 @@ impl Packet {
         self.payload_length += payloads.len() as u8;
         Ok(())
     }
+
+    /// Serialize this Packet into a `&[u8]` which can be sent on-the-wire.
+    ///
+    /// This can fail if buf is to small, in which case `None` is returned.
+    /// Otherwise, return the amount of bytes written into `buf`.
+    pub fn try_serialize_into(&self, buf: &mut [u8]) -> Option<usize> {
+        if buf.len() < 4 + self.payload_length as usize * 8 {
+            return None;
+        };
+        // the HEADER
+        buf[0] = self.version.major;
+        buf[1] = self.version.minor;
+        buf[2] = 4 + self.payload_length as u8 * 8;
+        buf[3] = self.payload_length as u8;
+
+        // the PAYLOAD
+        // now set each individual payload
+        for (index, payload) in self.payloads.iter().enumerate().take_while(|(i, _)| *i < self.payload_length as usize) {
+            payload.serialize_into(&mut buf[4 + index * 8..=11 + index * 8]);
+        }
+        Some(4 + self.payloads.len() as usize * 8)
+    }
 }
 
 
@@ -138,7 +159,7 @@ mod test {
         let packet: crate::Packet = raw_bytes[0..20]
             .try_into()
             .expect("This Packet is parsable.");
-        let mut payloads = [Payload::default(); 31];
+        let mut payloads = [crate::Payload::default(); 31];
         payloads[0] = crate::Payload {
                         node: 3,
                         pdo_index: 0,

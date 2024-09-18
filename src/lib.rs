@@ -1,23 +1,28 @@
 //! coe is a library that (De-)serializes CoE packets.
 //! The Protocol is owned by `Technische Alternative RT GmbH`.
 //!
-//! `coe` uses [std] by default to implement [std::error::Error] on all internal error types.
-//! If you need to use coe in a `no_std` environment, disable the default features.
-//!
+//! # Getting Started
+//! You can send packets, by creating the Packet as required and then converting the packet into a
+//! `Vec[u8]`.
 //! ```ignore
 //! #[tokio::main]
 //! async fn main() -> Result<(), Box<dyn std::error::Error>> {
 //!     let mut test_packet = Packet::new();
-//!     // send to CAN-ID 58, at offset 1
+//!     // send to CAN-ID 58, at offset 1 (shows up as 2 in the GUI)
 //!     test_packet.try_push(Payload::new(58, 1, coe::COEValue::Analogue(AnalogueCOEValue::LiterPerPulse_Tens(123))))?;
 //!
 //!     let socket = UdpSocket::bind("0.0.0.0:34215").await?;
+//!     let mut buf = [0_u8; 252];
+//!     test_packet.try_serialize_into(&mut buf).expect("252 bytes is always large enough to fit a
+//!     CoE Packet");
 //!     // connect to the IP of your CMI
 //!     socket.connect("192.168.1.123:5442").await?;
-//!     socket.send(&Into::<Vec<u8>>::into(test_packet)).await?;
+//!     socket.send(&buf).await?;
 //!     Ok(())
 //! }
 //! ```
+//!
+//! # Feature Flags
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
@@ -150,7 +155,7 @@ impl std::error::Error for PacketMaxPayloadsExceeded {}
 #[cfg(feature = "alloc")]
 mod packet_alloc;
 #[cfg(feature = "alloc")]
-use packet_alloc::Packet;
+pub use packet_alloc::Packet;
 
 #[cfg(not(feature = "alloc"))]
 mod packet_no_alloc;
