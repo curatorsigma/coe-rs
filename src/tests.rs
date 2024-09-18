@@ -2,8 +2,6 @@
 
 #[cfg(feature = "alloc")]
 use crate::Packet;
-#[cfg(feature = "alloc")]
-use alloc::{vec, vec::Vec};
 
 use crate::*;
 

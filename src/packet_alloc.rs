@@ -151,7 +151,7 @@ mod test {
             packet,
             crate::Packet {
                 version: crate::COEVersion { major: 2, minor: 0 },
-                payloads: vec![
+                payloads: alloc::vec![
                     crate::Payload {
                         node: 3,
                         pdo_index: 0,
