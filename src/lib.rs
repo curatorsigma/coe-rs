@@ -30,7 +30,7 @@ use alloc::vec::Vec;
 mod tests;
 
 /// All the Errors that can appear when parsing a COE packet.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub enum ParseCOEError {
     /// The Node value is not allowed (1-62)
@@ -113,7 +113,7 @@ impl std::error::Error for ParseCOEError {}
 
 /// A COE packet can have at most 255 bytes = 31 Payloads.
 /// This Error occurs, when the user tries to add another payload to a packet that is already full.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub struct PacketMaxPayloadsExceeded {}
 impl alloc::fmt::Display for PacketMaxPayloadsExceeded {
@@ -471,6 +471,9 @@ impl std::error::Error for FromDayOfMonthError {}
 /// use coe::{AnalogueCOEValue, from_day_of_month, to_day_of_month};
 /// assert_eq!(from_day_of_month(to_day_of_month(9, 12).unwrap()), Ok((9, 12)));
 /// ```
+// Why is this not a method on AnalogueCOEValue?
+// This conversion only makes sense when we have a DayOfMonth value.
+// Keeping this function separate prevents IDEs from showing this method for all AnalogueCOEValues.
 pub fn from_day_of_month(value: AnalogueCOEValue) -> Result<(u8, u8), FromDayOfMonthError> {
     match value {
         AnalogueCOEValue::DayOfMonth(x) => {
@@ -550,6 +553,9 @@ impl std::error::Error for FromMonthOfYearError {}
 /// use coe::{AnalogueCOEValue, from_month_of_year, to_month_of_year};
 /// assert_eq!(from_month_of_year(to_month_of_year(5, 325).unwrap()), Ok((5, 325)));
 /// ```
+// Why is this not a method on AnalogueCOEValue?
+// This conversion only makes sense when we have a MonthOfYear value.
+// Keeping this function separate prevents IDEs from showing this method for all AnalogueCOEValues.
 pub fn from_month_of_year(value: AnalogueCOEValue) -> Result<(u8, u16), FromMonthOfYearError> {
     match value {
         AnalogueCOEValue::MonthOfYear(x) => {
