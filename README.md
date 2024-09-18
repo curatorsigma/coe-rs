@@ -24,14 +24,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 You can receive packets like this (but please add better Error handling for real-world applications):
 ```rust
-async fn listener() {
-    let socket = UdpSocket::bind("0.0.0.0:5442").await.unwrap();
+async fn listener() -> Result<(), Box<dyn Error>> {
+    let socket = UdpSocket::bind("0.0.0.0:5442").await?;
 
-    // the largest possible COE packet is 256 byte long
+    // the largest possible COE packet is 256 byte long, so this is always safe
     let mut buf = [0_u8; 256];
     loop {
-        let (length, _) = socket.recv_from(&mut buf).await.unwrap();
-        let parsed = TryInto::<coe::Packet>::try_into(&buf[0..length]).unwrap();
+        let (length, _) = socket.recv_from(&mut buf).await?;
+        let parsed = TryInto::<coe::Packet>::try_into(&buf[0..length])?;
         dbg!(&parsed);
     }
 }

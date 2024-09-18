@@ -218,14 +218,14 @@ impl Packet {
         }
     }
 
-    /// Create a packet with payloads. Fails if more then 31 payloads are given.
+    /// Create a [Packet] with [Payload]s. Fails if more then 31 payloads are given.
     pub fn try_from_payloads(payloads: &[Payload]) -> Result<Packet, PacketMaxPayloadsExceeded> {
         let mut p = Packet::new();
         p.try_append_from_slice(payloads)?;
         Ok(p)
     }
 
-    /// Try to append a payload to a packet
+    /// Try to append a [Payload] to a [Packet]
     ///
     /// Fails if the final packet size would exceed 255 bytes (31 payloads).
     /// On failure, the packet was left unmodified.
@@ -237,7 +237,7 @@ impl Packet {
         Ok(())
     }
 
-    /// Try to append all the given payloads to a packet
+    /// Try to append all the given [Payload]s to a [Packet]
     ///
     /// Fails if the final packet size would exceed 255 bytes (31 payloads).
     /// On failure, the packet was left unmodified.
@@ -283,9 +283,10 @@ impl TryFrom<(u8, u8)> for COEVersion {
     }
 }
 
-/// Information present in a CoE payload header (sent before every value)
-/// This struct will only be created via `TryFrom::<[u8; 4]>`. Correct node number and pdo_index are
-/// enforced in this TryFrom.
+/// A single Payload that can be sent in a CoE packet.
+///
+/// This contains information about the destination (node and pdo_index) and the actual value
+/// [COEValue].
 ///
 /// NOTE: the pdo_index is offset by one to the representation in the GUI.
 /// We store the on-wire format here, without the +1 offset present in the GUIs.
@@ -302,6 +303,7 @@ pub struct Payload {
     /// analogue, so we do not need to store the format.
     value: COEValue,
 }
+/// Try to parse a `&[u8]` into a Payload.
 impl TryFrom<&[u8]> for Payload {
     type Error = ParseCOEError;
 
@@ -451,7 +453,7 @@ impl alloc::fmt::Display for FromDayOfMonthError {
 #[cfg(feature = "std")]
 impl std::error::Error for FromDayOfMonthError {}
 
-/// Convert the internal format for DayOfMonth into two u8s containing day and month
+/// Convert the internal format for [AnalogueCOEValue::DayOfMonth] into two u8s containing day and month
 ///
 /// Example:
 /// ```rust
@@ -485,7 +487,7 @@ pub fn from_day_of_month(value: AnalogueCOEValue) -> Result<(u8, u8), FromDayOfM
     }
 }
 
-/// Convert a month and year into the internal format used in CoE.
+/// Convert a month and year into a [AnalogueCOEValue::DayOfMonth].
 ///
 /// Returns `None` when `month` is out of bounds.
 ///
@@ -530,7 +532,7 @@ impl alloc::fmt::Display for FromMonthOfYearError {
 #[cfg(feature = "std")]
 impl std::error::Error for FromMonthOfYearError {}
 
-/// Convert the internal format for MonthOfYear into a u8 and u16 containing month and year
+/// Convert the internal format for [AnalogueCOEValue::MonthOfYear] into a `u8` and `u16` containing month and year
 ///
 /// Example:
 /// ```rust
