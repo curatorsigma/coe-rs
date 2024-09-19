@@ -14,7 +14,7 @@ readme = "README.md"
 unsafe_code = "forbid"
 
 [features]
-default = []
+default = ["std"]
 
 # Implement std::error::Error for all Error types.
 std = ["alloc"]
