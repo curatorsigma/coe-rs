@@ -30,9 +30,13 @@ serde = ["dep:serde"]
 serde = { version = "1.0.210", optional = true, default-features = false, features = ["derive"] }
 
 [dev-dependencies]
-tokio = { version = "1.40.0", features = ["macros", "rt-multi-thread", "net"] }
+tokio = { version = "1.40.0", features = ["macros", "rt-multi-thread", "net", "time"] }
 
 [[example]]
 name = "01_start_here"
+required-features = ["alloc"]
+
+[[example]]
+name = "02_send_date"
 required-features = ["alloc"]
 
