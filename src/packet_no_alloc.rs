@@ -139,6 +139,19 @@ impl Packet {
         self.payload_length.into()
     }
 
+    /// The size this packet would have on-wire in bytes.
+    ///
+    /// For example, this code is safe:
+    /// ```
+    /// # use coe::Packet;
+    /// let packet = Packet::new();
+    /// let mut buf = vec![0_u8; packet.wire_size()];
+    /// packet.try_serialize_into(&mut buf).expect("I set the wire-size correctly.");
+    /// ```
+    pub fn wire_size(&self) -> usize {
+        4 + self.len() * 8
+    }
+
     /// Get the COE Version of this Packet.
     pub fn version(&self) -> COEVersion {
         self.version

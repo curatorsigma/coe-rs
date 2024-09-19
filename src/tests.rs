@@ -1599,6 +1599,8 @@ fn packet_iteration() {
     assert_eq!(packet_iter.count(), 2);
 
 
-    for _payload in packet {
+    for payload in packet {
+        let _uid = payload.unit_id();
+        let _value = payload.value();
     };
 }

@@ -43,6 +43,7 @@ extern crate alloc;
 #[cfg(feature = "alloc")]
 use alloc::{vec, vec::Vec};
 
+#[cfg(test)]
 mod tests;
 
 mod packet_common;
