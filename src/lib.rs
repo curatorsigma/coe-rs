@@ -31,8 +31,8 @@
 //! This makes `coe` depend only on [core], for use in no_alloc / no_std environments.
 //! You can reenable the following feature flags
 //! - `alloc`: This switches the implementation for a Packet from a fixed-size buffer to a Vec,
-//! which is usually more memory-efficient. It also enables the [packets_from_payloads] function
-//! and implements Display for Error types.
+//!    which is usually more memory-efficient. It also enables the [packets_from_payloads] function
+//!    and implements Display for Error types.
 //! - Going from `alloc` to `std` implements [std::error::Error] on all Error types.
 //!
 
@@ -464,7 +464,7 @@ impl std::error::Error for FromDayOfMonthError {}
 pub fn from_day_of_month(value: AnalogueCOEValue) -> Result<(u8, u8), FromDayOfMonthError> {
     match value {
         AnalogueCOEValue::DayOfMonth(x) => {
-            if x < 0 || x > 30 + 31 * 11 {
+            if !(0..=30 + 31 * 11).contains(&x) {
                 Err(FromDayOfMonthError::ValueOutOfBounds(x))
             } else {
                 Ok((

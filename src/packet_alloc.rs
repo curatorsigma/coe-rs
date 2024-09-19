@@ -65,7 +65,7 @@ impl From<Packet> for Vec<u8> {
         let mut res = vec![0_u8; 4 + value.payloads.len() * 8];
         // Packet always successfully serializes, since we set the size correctly
         value.try_serialize_into(&mut res).unwrap();
-        return res;
+        res
     }
 }
 impl IntoIterator for Packet {
@@ -89,6 +89,11 @@ impl<'a> IntoIterator for &'a mut Packet {
         self.payloads.iter_mut()
     }
 }
+impl Default for Packet {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 impl Packet {
     /// Create a packet without payloads
     pub fn new() -> Packet {
@@ -101,6 +106,11 @@ impl Packet {
     /// The number of payloads in this packet.
     pub fn len(&self) -> usize {
         self.payloads.len()
+    }
+
+    /// Returns whether there are any payloads in this packet.
+    pub fn is_empty(&self) -> bool {
+        self.payloads.is_empty()
     }
 
     /// The size this packet would have on-wire in bytes.
@@ -127,7 +137,7 @@ impl Packet {
     }
 
     /// Get the payloads of this Packet by mutable reference.
-    pub fn iter_mut<'a>(&'a mut self) -> core::slice::IterMut<'a, Payload> {
+    pub fn iter_mut(&mut self) -> core::slice::IterMut<'_, Payload> {
         self.payloads.iter_mut()
     }
 
@@ -184,7 +194,7 @@ impl Packet {
     /// This can fail if buf is to small, in which case `None` is returned.
     /// Otherwise, return the amount of bytes written into `buf`.
     pub fn try_serialize_into(&self, buf: &mut [u8]) -> Option<usize> {
-        if buf.len() < 4 + self.payloads.len() as usize * 8 {
+        if buf.len() < 4 + self.payloads.len() * 8 {
             return None;
         };
         // the HEADER
@@ -198,7 +208,7 @@ impl Packet {
         for (index, payload) in self.payloads.iter().enumerate() {
             payload.serialize_into(&mut buf[4 + index * 8..=11 + index * 8]);
         }
-        Some(4 + self.payloads.len() as usize * 8)
+        Some(4 + self.payloads.len() * 8)
     }
 }
 
