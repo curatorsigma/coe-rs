@@ -1,5 +1,7 @@
 //! Implement [Packet] with the alloc feature enabled
 
+use self::packet_common::PacketIterator;
+
 use super::*;
 
 /// A COE Packet
@@ -19,7 +21,7 @@ pub struct Packet {
     /// CoE Version used. Currently, only 2.0 is supported.
     version: COEVersion,
     /// The actual payloads.
-    payloads: Vec<Payload>,
+    pub(crate) payloads: Vec<Payload>,
 }
 impl TryFrom<&[u8]> for Packet {
     type Error = ParseCOEError;
@@ -66,6 +68,27 @@ impl From<Packet> for Vec<u8> {
         return res;
     }
 }
+impl IntoIterator for Packet {
+    type Item = Payload;
+    type IntoIter = alloc::vec::IntoIter<Payload>;
+    fn into_iter(self) -> Self::IntoIter {
+        self.payloads.into_iter()
+    }
+}
+impl<'a> IntoIterator for &'a Packet {
+    type Item = &'a Payload;
+    type IntoIter = core::slice::Iter<'a, Payload>;
+    fn into_iter(self) -> Self::IntoIter {
+        self.payloads.iter()
+    }
+}
+impl<'a> IntoIterator for &'a mut Packet {
+    type Item = &'a mut Payload;
+    type IntoIter = core::slice::IterMut<'a, Payload>;
+    fn into_iter(self) -> Self::IntoIter {
+        self.payloads.iter_mut()
+    }
+}
 impl Packet {
     /// Create a packet without payloads
     pub fn new() -> Packet {
@@ -78,6 +101,21 @@ impl Packet {
     /// The number of payloads in this packet.
     pub fn len(&self) -> usize {
         self.payloads.len()
+    }
+
+    /// Get the COE Version of this Packet.
+    pub fn version(&self) -> COEVersion {
+        self.version
+    }
+
+    /// Get the payloads of this Packet by immutable reference
+    pub fn iter(&self) -> PacketIterator {
+        PacketIterator::new(self)
+    }
+
+    /// Get the payloads of this Packet by mutable reference.
+    pub fn iter_mut<'a>(&'a mut self) -> core::slice::IterMut<'a, Payload> {
+        self.payloads.iter_mut()
     }
 
     /// Create a [Packet] with [Payload]s. Fails if more then 31 payloads are given.

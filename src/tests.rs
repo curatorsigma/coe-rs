@@ -1503,3 +1503,25 @@ fn packets_from_payloads() {
     let packets = crate::packets_from_payloads(&payloads);
     assert_eq!(packets.len(), 3);
 }
+
+#[test]
+fn packet_iteration() {
+    let raw_bytes = [
+        2, 0, 20, 2, 3, 0, 1, 1, 95, 0, 0, 0, 3, 0, 0, 43, 1, 0, 0, 0,
+    ];
+    let mut packet: crate::Packet = raw_bytes[0..20]
+        .try_into()
+        .expect("This Packet is parsable.");
+    let version = packet.version();
+    assert_eq!(version, COEVersion{ major: 2, minor: 0});
+
+    let packet_iter = packet.iter();
+    assert_eq!(packet_iter.count(), 2);
+
+    let packet_iter = packet.iter_mut();
+    assert_eq!(packet_iter.count(), 2);
+
+
+    for _payload in packet {
+    };
+}

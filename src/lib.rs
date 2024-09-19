@@ -45,6 +45,8 @@ use alloc::{vec, vec::Vec};
 
 mod tests;
 
+mod packet_common;
+
 /// The Format a COE Value can have.
 #[derive(Hash, Debug, PartialEq, Eq, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
@@ -175,13 +177,21 @@ pub fn packets_from_payloads(payloads: &[Payload]) -> Vec<Packet> {
 }
 
 /// The Version of COE protocol used.
-#[derive(Hash, Debug, PartialEq)]
+#[derive(Hash, Debug, PartialEq, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
-struct COEVersion {
+pub struct COEVersion {
     /// The major CoE Version. Only 2 is supported.
     major: u8,
     /// The minor CoE Version. Only 0 is supported.
     minor: u8,
+}
+impl COEVersion {
+    pub fn major(&self) -> u8 {
+        self.major
+    }
+    pub fn minor(&self) -> u8 {
+        self.minor
+    }
 }
 impl TryFrom<(u8, u8)> for COEVersion {
     type Error = ParseCOEError;
@@ -191,6 +201,12 @@ impl TryFrom<(u8, u8)> for COEVersion {
             return Err(Self::Error::VersionNotImplemented(value.0, value.1));
         };
         Ok(COEVersion { major: 2, minor: 0 })
+    }
+}
+#[cfg(feature = "alloc")]
+impl alloc::fmt::Display for COEVersion {
+    fn fmt(&self, f: &mut alloc::fmt::Formatter) -> alloc::fmt::Result {
+        write!(f, "{}.{}", self.major, self.minor)
     }
 }
 

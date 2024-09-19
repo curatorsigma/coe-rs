@@ -2,6 +2,9 @@
 
 use super::*;
 
+use self::packet_common::PacketIterator;
+
+
 /// A COE Packet
 ///
 /// This models every possible Packet that can be send via CoE.
@@ -19,7 +22,7 @@ pub struct Packet {
     /// CoE Version used. Currently, only 2.0 is supported.
     version: COEVersion,
     /// The actual payloads.
-    payloads: [Payload; 31],
+    pub(crate) payloads: [Payload; 31],
     /// The amount of payloads actually used
     /// The remaining payloads are defaulted, but SHOULD NOT be read, because they contain no
     /// semantic
@@ -81,6 +84,46 @@ impl From<Packet> for [u8; 4 + 8 * 31] {
         return res;
     }
 }
+pub struct PacketNoAllocIntoIter {
+    packet: Packet,
+    idx: usize,
+}
+impl Iterator for PacketNoAllocIntoIter {
+    type Item = Payload;
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.idx < self.packet.len() {
+            let res = Some(self.packet.payloads[self.idx]);
+            self.idx += 1;
+            res
+        } else {
+            None
+        }
+    }
+}
+impl IntoIterator for Packet {
+    type Item = Payload;
+    type IntoIter = PacketNoAllocIntoIter;
+    fn into_iter(self) -> Self::IntoIter {
+        PacketNoAllocIntoIter {
+            packet: self,
+            idx: 0,
+        }
+    }
+}
+impl<'a> IntoIterator for &'a Packet {
+    type Item = &'a Payload;
+    type IntoIter = core::slice::Iter<'a, Payload>;
+    fn into_iter(self) -> Self::IntoIter {
+        self.payloads[0..self.payload_length as usize].iter()
+    }
+}
+impl<'a> IntoIterator for &'a mut Packet {
+    type Item = &'a mut Payload;
+    type IntoIter = core::slice::IterMut<'a, Payload>;
+    fn into_iter(self) -> Self::IntoIter {
+        self.payloads[0..self.payload_length as usize].iter_mut()
+    }
+}
 impl Packet {
     /// Create a packet without payloads
     pub fn new() -> Packet {
@@ -94,6 +137,21 @@ impl Packet {
     /// The number of payloads in this packet.
     pub fn len(&self) -> usize {
         self.payload_length.into()
+    }
+
+    /// Get the COE Version of this Packet.
+    pub fn version(&self) -> COEVersion {
+        self.version
+    }
+
+    /// Get the payloads of this Packet by immutable reference
+    pub fn iter(&self) -> PacketIterator {
+        PacketIterator::new(self)
+    }
+
+    /// Get the payloads of this Packet by mutable reference.
+    pub fn iter_mut<'a>(&'a mut self) -> core::slice::IterMut<'a, Payload> {
+        self.payloads[0..self.payload_length as usize].iter_mut()
     }
 
     /// Create a [Packet] with [Payload]s. Fails if more then 31 payloads are given.
