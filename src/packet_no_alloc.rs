@@ -216,6 +216,7 @@ impl Packet {
     }
 }
 
+#[cfg(test)]
 mod test {
     #[test]
     fn parse_packet_success() {
