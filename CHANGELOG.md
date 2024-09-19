@@ -1,3 +1,6 @@
+# 0.2.1 -> TODO
+- Added `is_empy` function and `impl Default` for `Packet`
+
 # 0.2.0 -> 0.2.1
 - Added getters for Payloads and Packets.
 - Added `iter`, `iter_mut` and `into_iter` for Packets.
