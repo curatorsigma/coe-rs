@@ -375,14 +375,14 @@ impl COEValue {
     /// Return the format (Analogue | Digital) of this value
     pub fn format(&self) -> Format {
         match self {
-            Self::Analogue(_) => { Format::Analogue },
-            Self::Digital(_) => { Format::Digital },
+            Self::Analogue(_) => Format::Analogue,
+            Self::Digital(_) => Format::Digital,
         }
     }
     pub fn unit_id(&self) -> u8 {
         match self {
-            Self::Analogue(x) => { x.unit_id() },
-            Self::Digital(x) => { x.unit_id() },
+            Self::Analogue(x) => x.unit_id(),
+            Self::Digital(x) => x.unit_id(),
         }
     }
 }

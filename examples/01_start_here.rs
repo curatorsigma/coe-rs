@@ -2,8 +2,8 @@
 //!
 //! NOTE: this example requires at least the `alloc` feature, because it requires [ParseCOEError]
 //! to `impl`Display`.
-use std::error::Error;
 use coe::{ParseCOEError, Payload};
+use std::error::Error;
 use tokio::net::UdpSocket;
 
 #[derive(Debug)]
@@ -25,7 +25,7 @@ impl std::fmt::Display for ListenerError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             Self::UDP(e) => write!(f, "UDP Error: {e}"),
-            Self::COE(e) => write!(f, "COE Error: {e}")
+            Self::COE(e) => write!(f, "COE Error: {e}"),
         }
     }
 }

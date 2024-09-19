@@ -4,7 +4,6 @@ use super::*;
 
 use self::packet_common::PacketIterator;
 
-
 /// A COE Packet
 ///
 /// This models every possible Packet that can be send via CoE.

@@ -6,10 +6,7 @@ pub struct PacketIterator<'a> {
 }
 impl<'a> PacketIterator<'a> {
     pub fn new(packet: &'a Packet) -> Self {
-        Self {
-            packet,
-            idx: 0,
-        }
+        Self { packet, idx: 0 }
     }
 }
 impl<'a> Iterator for PacketIterator<'a> {

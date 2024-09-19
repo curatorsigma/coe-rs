@@ -1590,7 +1590,7 @@ fn packet_iteration() {
         .try_into()
         .expect("This Packet is parsable.");
     let version = packet.version();
-    assert_eq!(version, COEVersion{ major: 2, minor: 0});
+    assert_eq!(version, COEVersion { major: 2, minor: 0 });
 
     let packet_iter = packet.iter();
     assert_eq!(packet_iter.count(), 2);
@@ -1598,9 +1598,8 @@ fn packet_iteration() {
     let packet_iter = packet.iter_mut();
     assert_eq!(packet_iter.count(), 2);
 
-
     for payload in packet {
         let _uid = payload.unit_id();
         let _value = payload.value();
-    };
+    }
 }
