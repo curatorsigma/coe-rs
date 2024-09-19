@@ -42,8 +42,7 @@ async fn sender() -> Result<(), SenderError> {
 
         // send the packet
         socket.connect("192.168.1.123:5442").await?;
-        let mut buf = vec![0; packet.wire_size()];
-        packet.try_serialize_into(&mut buf).expect("wire-size was manually respected");
+        let buf = packet.serialize_into_vec();
         socket.send(&buf).await?;
 
         interval.tick().await;
