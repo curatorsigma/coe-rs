@@ -24,6 +24,7 @@ fn parse_value_01() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 1);
     assert_eq!(
         payload,
         crate::Payload {
@@ -40,6 +41,7 @@ fn parse_value_02() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 2);
     assert_eq!(
         payload,
         crate::Payload {
@@ -56,6 +58,7 @@ fn parse_value_03() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 3);
     assert_eq!(
         payload,
         crate::Payload {
@@ -72,6 +75,7 @@ fn parse_value_04() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 4);
     assert_eq!(
         payload,
         crate::Payload {
@@ -88,6 +92,7 @@ fn parse_value_05() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 5);
     assert_eq!(
         payload,
         crate::Payload {
@@ -104,6 +109,7 @@ fn parse_value_06() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 6);
     assert_eq!(
         payload,
         crate::Payload {
@@ -120,6 +126,7 @@ fn parse_value_07() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 7);
     assert_eq!(
         payload,
         crate::Payload {
@@ -136,6 +143,7 @@ fn parse_value_08() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 8);
     assert_eq!(
         payload,
         crate::Payload {
@@ -152,6 +160,7 @@ fn parse_value_09() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 9);
     assert_eq!(
         payload,
         crate::Payload {
@@ -168,6 +177,7 @@ fn parse_value_10() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 10);
     assert_eq!(
         payload,
         crate::Payload {
@@ -184,6 +194,7 @@ fn parse_value_11() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 11);
     assert_eq!(
         payload,
         crate::Payload {
@@ -200,6 +211,7 @@ fn parse_value_12() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 12);
     assert_eq!(
         payload,
         crate::Payload {
@@ -216,6 +228,7 @@ fn parse_value_13() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 13);
     assert_eq!(
         payload,
         crate::Payload {
@@ -232,6 +245,7 @@ fn parse_value_14() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 14);
     assert_eq!(
         payload,
         crate::Payload {
@@ -248,6 +262,7 @@ fn parse_value_15() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 15);
     assert_eq!(
         payload,
         crate::Payload {
@@ -264,6 +279,7 @@ fn parse_value_16() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 16);
     assert_eq!(
         payload,
         crate::Payload {
@@ -280,6 +296,7 @@ fn parse_value_17() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 17);
     assert_eq!(
         payload,
         crate::Payload {
@@ -296,6 +313,7 @@ fn parse_value_18() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 18);
     assert_eq!(
         payload,
         crate::Payload {
@@ -312,6 +330,7 @@ fn parse_value_19() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 19);
     assert_eq!(
         payload,
         crate::Payload {
@@ -328,6 +347,7 @@ fn parse_value_20() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 20);
     assert_eq!(
         payload,
         crate::Payload {
@@ -344,6 +364,7 @@ fn parse_value_21() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 21);
     assert_eq!(
         payload,
         crate::Payload {
@@ -360,6 +381,7 @@ fn parse_value_22() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 22);
     assert_eq!(
         payload,
         crate::Payload {
@@ -376,6 +398,7 @@ fn parse_value_23() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 23);
     assert_eq!(
         payload,
         crate::Payload {
@@ -392,6 +415,7 @@ fn parse_value_24() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 24);
     assert_eq!(
         payload,
         crate::Payload {
@@ -410,6 +434,7 @@ fn parse_value_25() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 25);
     assert_eq!(
         payload,
         crate::Payload {
@@ -426,6 +451,7 @@ fn parse_value_26() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 26);
     assert_eq!(
         payload,
         crate::Payload {
@@ -442,6 +468,7 @@ fn parse_value_27() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 27);
     assert_eq!(
         payload,
         crate::Payload {
@@ -458,6 +485,7 @@ fn parse_value_28() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 28);
     assert_eq!(
         payload,
         crate::Payload {
@@ -474,6 +502,7 @@ fn parse_value_29() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 29);
     assert_eq!(
         payload,
         crate::Payload {
@@ -492,6 +521,7 @@ fn parse_value_30() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 30);
     assert_eq!(
         payload,
         crate::Payload {
@@ -510,6 +540,7 @@ fn parse_value_31() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 31);
     assert_eq!(
         payload,
         crate::Payload {
@@ -528,6 +559,7 @@ fn parse_value_32() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 32);
     assert_eq!(
         payload,
         crate::Payload {
@@ -546,6 +578,7 @@ fn parse_value_33() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 33);
     assert_eq!(
         payload,
         crate::Payload {
@@ -564,6 +597,7 @@ fn parse_value_34() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 34);
     assert_eq!(
         payload,
         crate::Payload {
@@ -582,6 +616,7 @@ fn parse_value_35() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 35);
     assert_eq!(
         payload,
         crate::Payload {
@@ -598,6 +633,7 @@ fn parse_value_36() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 36);
     assert_eq!(
         payload,
         crate::Payload {
@@ -614,6 +650,7 @@ fn parse_value_37() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 37);
     assert_eq!(
         payload,
         crate::Payload {
@@ -630,6 +667,7 @@ fn parse_value_38() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 38);
     assert_eq!(
         payload,
         crate::Payload {
@@ -646,6 +684,7 @@ fn parse_value_39() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 39);
     assert_eq!(
         payload,
         crate::Payload {
@@ -662,6 +701,7 @@ fn parse_value_40() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 40);
     assert_eq!(
         payload,
         crate::Payload {
@@ -680,6 +720,7 @@ fn parse_value_41() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 41);
     assert_eq!(
         payload,
         crate::Payload {
@@ -698,6 +739,7 @@ fn parse_value_42() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 42);
     assert_eq!(
         payload,
         crate::Payload {
@@ -716,6 +758,7 @@ fn parse_value_43() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 43);
     assert_eq!(
         payload,
         crate::Payload {
@@ -732,6 +775,7 @@ fn parse_value_44() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 44);
     assert_eq!(
         payload,
         crate::Payload {
@@ -748,6 +792,7 @@ fn parse_value_45() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 45);
     assert_eq!(
         payload,
         crate::Payload {
@@ -764,6 +809,7 @@ fn parse_value_46() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 46);
     assert_eq!(
         payload,
         crate::Payload {
@@ -782,6 +828,7 @@ fn parse_value_47() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 47);
     assert_eq!(
         payload,
         crate::Payload {
@@ -798,6 +845,7 @@ fn parse_value_48() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 48);
     assert_eq!(
         payload,
         crate::Payload {
@@ -816,6 +864,7 @@ fn parse_value_49() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 49);
     assert_eq!(
         payload,
         crate::Payload {
@@ -834,6 +883,7 @@ fn parse_value_50() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 50);
     assert_eq!(
         payload,
         crate::Payload {
@@ -852,6 +902,7 @@ fn parse_value_51() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 51);
     assert_eq!(
         payload,
         crate::Payload {
@@ -870,6 +921,7 @@ fn parse_value_52() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 52);
     assert_eq!(
         payload,
         crate::Payload {
@@ -888,6 +940,7 @@ fn parse_value_53() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 53);
     assert_eq!(
         payload,
         crate::Payload {
@@ -906,6 +959,7 @@ fn parse_value_54() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 54);
     assert_eq!(
         payload,
         crate::Payload {
@@ -922,6 +976,7 @@ fn parse_value_55() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 55);
     assert_eq!(
         payload,
         crate::Payload {
@@ -938,6 +993,7 @@ fn parse_value_56() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 56);
     assert_eq!(
         payload,
         crate::Payload {
@@ -954,6 +1010,7 @@ fn parse_value_57() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 57);
     assert_eq!(
         payload,
         crate::Payload {
@@ -970,6 +1027,7 @@ fn parse_value_58() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 58);
     assert_eq!(
         payload,
         crate::Payload {
@@ -986,6 +1044,7 @@ fn parse_value_59() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 59);
     assert_eq!(
         payload,
         crate::Payload {
@@ -1002,6 +1061,7 @@ fn parse_value_60() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 60);
     assert_eq!(
         payload,
         crate::Payload {
@@ -1018,6 +1078,7 @@ fn parse_value_61() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 61);
     assert_eq!(
         payload,
         crate::Payload {
@@ -1034,6 +1095,7 @@ fn parse_value_62() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 62);
     assert_eq!(
         payload,
         crate::Payload {
@@ -1050,6 +1112,7 @@ fn parse_value_63() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 63);
     assert_eq!(
         payload,
         crate::Payload {
@@ -1066,6 +1129,7 @@ fn parse_value_64() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 64);
     assert_eq!(
         payload,
         crate::Payload {
@@ -1082,6 +1146,7 @@ fn parse_value_65() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 65);
     assert_eq!(
         payload,
         crate::Payload {
@@ -1098,6 +1163,7 @@ fn parse_value_66() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 66);
     assert_eq!(
         payload,
         crate::Payload {
@@ -1114,6 +1180,7 @@ fn parse_value_67() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 67);
     assert_eq!(
         payload,
         crate::Payload {
@@ -1130,6 +1197,7 @@ fn parse_value_68() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 68);
     assert_eq!(
         payload,
         crate::Payload {
@@ -1146,6 +1214,7 @@ fn parse_value_69() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 69);
     assert_eq!(
         payload,
         crate::Payload {
@@ -1162,6 +1231,7 @@ fn parse_value_70() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 70);
     assert_eq!(
         payload,
         crate::Payload {
@@ -1178,6 +1248,7 @@ fn parse_value_71() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 71);
     assert_eq!(
         payload,
         crate::Payload {
@@ -1194,6 +1265,7 @@ fn parse_value_72() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 72);
     assert_eq!(
         payload,
         crate::Payload {
@@ -1210,6 +1282,7 @@ fn parse_value_73() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 73);
     assert_eq!(
         payload,
         crate::Payload {
@@ -1226,6 +1299,7 @@ fn parse_value_74() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 74);
     assert_eq!(
         payload,
         crate::Payload {
@@ -1242,6 +1316,7 @@ fn parse_value_75() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 75);
     assert_eq!(
         payload,
         crate::Payload {
@@ -1406,6 +1481,7 @@ fn parse_payload_pdo_0() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 60);
     assert_eq!(
         payload,
         crate::Payload {
@@ -1422,6 +1498,7 @@ fn parse_payload_pdo_63() {
     let payload: crate::Payload = raw_bytes[0..8]
         .try_into()
         .expect("This Packet is parsable.");
+    assert_eq!(payload.unit_id(), 60);
     assert_eq!(
         payload,
         crate::Payload {

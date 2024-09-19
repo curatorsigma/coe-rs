@@ -301,6 +301,31 @@ impl Payload {
         // now write the value
         self.value.serialize_into(&mut buf[2..8]);
     }
+
+    /// Get the CAN-ID of the node this payload is sent to
+    pub fn node(&self) -> u8 {
+        self.node
+    }
+
+    /// Get the pdo_index this payload is sent to
+    pub fn pdo_index(&self) -> u8 {
+        self.pdo_index
+    }
+
+    /// Get the Format (Analogue | Digital) contained in this payload
+    pub fn format(&self) -> Format {
+        self.value.format()
+    }
+
+    /// Get the Unit ID sent in this payload
+    pub fn unit_id(&self) -> u8 {
+        self.value.unit_id()
+    }
+
+    /// Get the Value sent in this payload
+    pub fn value(&self) -> COEValue {
+        self.value
+    }
 }
 
 /// Any Value that is representable in COE.
@@ -334,6 +359,20 @@ impl COEValue {
                 x.serialize_into(&mut buf[1..6]);
             }
         };
+    }
+
+    /// Return the format (Analogue | Digital) of this value
+    pub fn format(&self) -> Format {
+        match self {
+            Self::Analogue(_) => { Format::Analogue },
+            Self::Digital(_) => { Format::Digital },
+        }
+    }
+    pub fn unit_id(&self) -> u8 {
+        match self {
+            Self::Analogue(x) => { x.unit_id() },
+            Self::Digital(x) => { x.unit_id() },
+        }
     }
 }
 
@@ -999,6 +1038,83 @@ impl AnalogueCOEValue {
             }
         };
     }
+
+    pub fn unit_id(&self) -> u8 {
+        match self {
+            Self::Dimensionless(_) => 0,
+            Self::DegreeCentigrade_Tens(_) => 1,
+            Self::WattPerSquareMeter(_) => 2,
+            Self::LiterPerHour(_) => 3,
+            Self::Seconds(_) => 4,
+            Self::Minutes(_) => 5,
+            Self::LiterPerPulse_Tens(_) => 6,
+            Self::DegreeKelvin_Tens(_) => 7,
+            Self::Percent_Tens(_) => 8,
+            Self::Colon(_) => 9,
+            Self::KiloWatt_Hundreds(_) => 10,
+            Self::KilowattHour_Tens(_) => 11,
+            Self::MegawattHour(_) => 12,
+            Self::Volt_Hundreds(_) => 13,
+            Self::MilliAmpere_Tens(_) => 14,
+            Self::Hours(_) => 15,
+            Self::Days(_) => 16,
+            Self::Pulses(_) => 17,
+            Self::KiloOhm_Hundreds(_) => 18,
+            Self::Liters(_) => 19,
+            Self::KiloMetersPerHour(_) => 20,
+            Self::Hertz_Hundreds(_) => 21,
+            Self::LiterPerMinute(_) => 22,
+            Self::Bar_Hundreds(_) => 23,
+            Self::CoefficientOfPerformance_Hundreds(_) => 24,
+            Self::KiloMeter(_) => 25,
+            Self::Meter_Tens(_) => 26,
+            Self::MilliMeter(_) => 27,
+            Self::CubicMeter(_) => 28,
+            Self::HertzPerKiloMeterPerHour_HundredThousands(_) => 29,
+            Self::HertzPerMeterPerSecond_HundredThousands(_) => 30,
+            Self::KilowattHourPerPulse_HundredThousands(_) => 31,
+            Self::CubicMeterPerPulse_HundredThousands(_) => 32,
+            Self::MilliMeterPerPulse_HundredThousands(_) => 33,
+            Self::LiterPerPulse_HundredThousands(_) => 34,
+            Self::LiterPerDay(_) => 35,
+            Self::MetersPerSecond(_) => 36,
+            Self::CubicMeterPerMinute(_) => 37,
+            Self::CubicMeterPerHour(_) => 38,
+            Self::CubicMeterPerDay(_) => 39,
+            Self::MilliMeterPerMinute_Tens(_) => 40,
+            Self::MilliMeterPerHour_Tens(_) => 41,
+            Self::MilliMeterPerDay_Tens(_) => 42,
+            Self::DegreeCentigradePlusRAS_Tens(_) => 46,
+            Self::HeatingCircuitOpMode(_) => 48,
+            Self::HeatingCircuitOpLevel(_) => 49,
+            Self::CurrencyEuro_Hundreds(_) => 50,
+            Self::CurrencyDollar_Hundreds(_) => 51,
+            Self::AbsoluteHumidity_Tens(_) => 52,
+            Self::PricePerUnit_HundredThousands(_) => 53,
+            Self::Degree_Tens(_) => 54,
+            Self::Blinds(_) => 55,
+            Self::Degree_Millions(_) => 56,
+            Self::Second_Tens(_) => 57,
+            Self::Dimensionless_Tens(_) => 58,
+            Self::BlindsPosition(_) => 59,
+            Self::Time(_) => 60,
+            Self::DayOfMonth(_) => 61,
+            Self::Date(_, _, _) => 62,
+            Self::Ampere_Tens(_) => 63,
+            Self::MonthOfYear(_) => 64,
+            Self::Millibar_Tens(_) => 65,
+            Self::Pascal(_) => 66,
+            Self::CO2Content(_) => 67,
+            Self::RawHex(_) => 68,
+            Self::Watt(_) => 69,
+            Self::Tonne_Hundreds(_) => 70,
+            Self::KiloGram_Tens(_) => 71,
+            Self::Gram_Tens(_) => 72,
+            Self::CentiMeter_Tens(_) => 73,
+            Self::ColourTemperature(_) => 74,
+            Self::Lux_Tens(_) => 75,
+        }
+    }
 }
 
 /// Representation of all existing digital values representable in COE
@@ -1013,7 +1129,6 @@ pub enum DigitalCOEValue {
     /// `false == AUS`
     Mixer(bool) = 47,
 }
-
 /// Given the Format and raw value in bytes, try to create the DigitalCOEValue
 impl TryFrom<(&u8, &[u8])> for DigitalCOEValue {
     type Error = ParseCOEError;
@@ -1077,5 +1192,14 @@ impl DigitalCOEValue {
         };
         // all other bits should be cleared
         // but this is already satisfied, because we expect a null buffer
+    }
+
+    pub fn unit_id(&self) -> u8 {
+        match self {
+            Self::OnOff(_) => 43,
+            Self::YesNo(_) => 44,
+            Self::RASMode(_) => 45,
+            Self::Mixer(_) => 47,
+        }
     }
 }
