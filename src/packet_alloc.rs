@@ -167,7 +167,7 @@ impl Packet {
     /// Only available with feature `alloc` (or default features).
     /// Since we can allocate the correct amount of memory, this is infallible.
     ///
-    /// This is the preferred way to serialize if you you use the `alloc` feature.
+    /// This is the preferred way to serialize if you use the `alloc` feature.
     /// ```
     /// # use coe::Packet;
     /// let packet = Packet::new();
