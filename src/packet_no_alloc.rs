@@ -80,7 +80,7 @@ impl From<Packet> for [u8; 4 + 8 * 31] {
         let mut res = [0_u8; 4 + 8 * 31];
         // Packet always successfully serializes into a 252-byte array.
         value.try_serialize_into(&mut res).unwrap();
-        return res;
+        res
     }
 }
 pub struct PacketNoAllocIntoIter {
@@ -123,6 +123,11 @@ impl<'a> IntoIterator for &'a mut Packet {
         self.payloads[0..self.payload_length as usize].iter_mut()
     }
 }
+impl Default for Packet {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 impl Packet {
     /// Create a packet without payloads
     pub fn new() -> Packet {
@@ -137,6 +142,13 @@ impl Packet {
     pub fn len(&self) -> usize {
         self.payload_length.into()
     }
+
+    /// Returns whether there are any payloads in this packet.
+    pub fn is_empty(&self) -> bool {
+        self.payload_length == 0
+    
+    }
+
 
     /// The size this packet would have on-wire in bytes.
     ///
@@ -162,7 +174,7 @@ impl Packet {
     }
 
     /// Get the payloads of this Packet by mutable reference.
-    pub fn iter_mut<'a>(&'a mut self) -> core::slice::IterMut<'a, Payload> {
+    pub fn iter_mut(&mut self) -> core::slice::IterMut<'_, Payload> {
         self.payloads[0..self.payload_length as usize].iter_mut()
     }
 
@@ -211,8 +223,8 @@ impl Packet {
         // the HEADER
         buf[0] = self.version.major;
         buf[1] = self.version.minor;
-        buf[2] = 4 + self.payload_length as u8 * 8;
-        buf[3] = self.payload_length as u8;
+        buf[2] = 4 + self.payload_length * 8;
+        buf[3] = self.payload_length;
 
         // the PAYLOAD
         // now set each individual payload
@@ -224,7 +236,7 @@ impl Packet {
         {
             payload.serialize_into(&mut buf[4 + index * 8..=11 + index * 8]);
         }
-        Some(4 + self.payloads.len() as usize * 8)
+        Some(4 + self.payloads.len() * 8)
     }
 }
 
