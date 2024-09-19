@@ -162,22 +162,6 @@ impl Packet {
         Some(())
     }
 
-    /// Allocate the correct size of vec and serialize this [Packet] into it.
-    ///
-    /// Because we can allocate the correct size, this method is infallible.
-    ///
-    /// This is the preferred way to serialize a [Packet] if you use the `alloc` (or default) feature.
-    /// ```
-    /// # use coe::Packet;
-    /// let packet = Packet::new();
-    /// let buf: Vec<u8> = packet.serialize_into_vec();
-    /// ```
-    pub fn serialize_into_vec(&self) -> Vec<u8> {
-        let mut buf = vec![0_u8; self.wire_size()];
-        self.try_serialize_into(&mut buf).expect("known-good buffer size");
-        return buf;
-    }
-
     /// Serialize this Packet into a `&[u8]` which can be sent on-the-wire.
     ///
     /// This can fail if buf is to small, in which case `None` is returned.

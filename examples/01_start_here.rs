@@ -46,7 +46,8 @@ async fn listener() -> Result<(), ListenerError> {
 
         // now forward the result back
         socket.connect(sender).await?;
-        let buf = packet.serialize_into_vec();
+        let mut buf = vec![0; packet.wire_size()];
+        packet.try_serialize_into(&mut buf);
         socket.send(&buf).await?;
     }
 }
