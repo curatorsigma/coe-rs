@@ -344,6 +344,16 @@ pub enum COEValue {
     /// They are also called digital in TAPPS etc.
     Digital(DigitalCOEValue),
 }
+impl From<AnalogueCOEValue> for COEValue {
+    fn from(value: AnalogueCOEValue) -> Self {
+        Self::Analogue(value)
+    }
+}
+impl From<DigitalCOEValue> for COEValue {
+    fn from(value: DigitalCOEValue) -> Self {
+        Self::Digital(value)
+    }
+}
 impl COEValue {
     /// Serialize this COEValue into the given buffer
     /// the buffer MUST have length == 6
