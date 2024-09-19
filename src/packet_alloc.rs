@@ -162,6 +162,23 @@ impl Packet {
         Some(())
     }
 
+    /// Serialize this packet into a `Vec<u8>`.
+    ///
+    /// Only available with feature `alloc` (or default features).
+    /// Since we can allocate the correct amount of memory, this is infallible.
+    ///
+    /// This is the preferred way to serialize if you you use the `alloc` feature.
+    /// ```
+    /// # use coe::Packet;
+    /// let packet = Packet::new();
+    /// let buf = packet.serialize_into_vec();
+    /// ```
+    pub fn serialize_into_vec(&self) -> Vec<u8> {
+        let mut buf = vec![0_u8; self.wire_size()];
+        self.try_serialize_into(&mut buf).unwrap();
+        buf
+    }
+
     /// Serialize this Packet into a `&[u8]` which can be sent on-the-wire.
     ///
     /// This can fail if buf is to small, in which case `None` is returned.
