@@ -1,6 +1,6 @@
 [package]
 name = "coe"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 license = "MIT-0"
 description = "coe is a full implementation of the CoEv2 protocol by Technische Alternative"
@@ -28,4 +28,11 @@ serde = ["dep:serde"]
 
 [dependencies]
 serde = { version = "1.0.210", optional = true, default-features = false, features = ["derive"] }
+
+[dev-dependencies]
+tokio = { version = "1.40.0", features = ["macros", "rt-multi-thread", "net"] }
+
+[[example]]
+name = "01_start_here"
+required-features = ["alloc"]
 
