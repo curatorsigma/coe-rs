@@ -25,6 +25,7 @@ pub struct Packet {
 }
 impl TryFrom<&[u8]> for Packet {
     type Error = ParseCOEError;
+    /// Try to parse this byteslice as a COE packet
     fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
         // the header must be four byte long
         if value.len() < 4 {
@@ -32,9 +33,17 @@ impl TryFrom<&[u8]> for Packet {
         };
         // parse the version number from the first two bytes
         let version: COEVersion = (value[0], value[1]).try_into()?;
-        // assert that packet length and payload length are consistent
-        if value[2] != 4 + 8 * value[3] {
+        // assert that the packet length field is at most 31.
+        if value[3] > 31 {
             return Err(Self::Error::PacketLengthInconsistent(value[2], value[3]));
+        } else {
+            // assert that packet length and payload length are consistent
+            if value[2]
+                != u8::try_from(4 + 8 * u16::from(value[3]))
+                    .expect("Payload length should have been checked to be at most 31.")
+            {
+                return Err(Self::Error::PacketLengthInconsistent(value[2], value[3]));
+            }
         };
         // we are now certain that the header is correctly formed.
         // Assert that the packet actually has the correct size as given in the header.
@@ -62,10 +71,7 @@ impl From<Packet> for Vec<u8> {
     /// This is guaranteed to succeed since a Packet can never have more then 31 payloads, such
     /// that the resulting serialization will always be at most 255 bytes long.
     fn from(value: Packet) -> Self {
-        let mut res = vec![0_u8; 4 + value.payloads.len() * 8];
-        // Packet always successfully serializes, since we set the size correctly
-        value.try_serialize_into(&mut res).unwrap();
-        res
+        value.serialize_into_vec()
     }
 }
 impl IntoIterator for Packet {
@@ -183,9 +189,14 @@ impl Packet {
     /// let packet = Packet::new();
     /// let buf = packet.serialize_into_vec();
     /// ```
+    ///
+    /// # Panics
+    ///
+    /// On programmer error, when the allocated vector was to small.
     pub fn serialize_into_vec(&self) -> Vec<u8> {
         let mut buf = vec![0_u8; self.wire_size()];
-        self.try_serialize_into(&mut buf).unwrap();
+        self.try_serialize_into(&mut buf)
+            .expect("Serialization should work because we have allocated a correctly sized vec.");
         buf
     }
 
@@ -193,6 +204,10 @@ impl Packet {
     ///
     /// This can fail if buf is to small, in which case `None` is returned.
     /// Otherwise, return the amount of bytes written into `buf`.
+    ///
+    /// # Panics
+    ///
+    /// When this [Packet] contains more then u8::MAX [Payload]s, which is an invariant of [Packet].
     pub fn try_serialize_into(&self, buf: &mut [u8]) -> Option<usize> {
         if buf.len() < 4 + self.payloads.len() * 8 {
             return None;
@@ -200,8 +215,11 @@ impl Packet {
         // the HEADER
         buf[0] = self.version.major;
         buf[1] = self.version.minor;
-        buf[2] = 4 + self.payloads.len() as u8 * 8;
-        buf[3] = self.payloads.len() as u8;
+        buf[2] = 4 + u8::try_from(self.payloads.len())
+            .expect("payloads should contain at most 31 values")
+            * 8;
+        buf[3] =
+            u8::try_from(self.payloads.len()).expect("payloads should contain at most 31 values");
 
         // the PAYLOAD
         // now set each individual payload

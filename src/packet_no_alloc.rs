@@ -146,9 +146,7 @@ impl Packet {
     /// Returns whether there are any payloads in this packet.
     pub fn is_empty(&self) -> bool {
         self.payload_length == 0
-    
     }
-
 
     /// The size this packet would have on-wire in bytes.
     ///

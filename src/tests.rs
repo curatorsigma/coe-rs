@@ -1603,3 +1603,11 @@ fn packet_iteration() {
         let _value = payload.value();
     }
 }
+
+#[test]
+fn from_month_of_year_bounds() {
+    let val = AnalogueCOEValue::MonthOfYear(11 + 12 * i32::from(u16::MAX));
+    let (x, y) = from_month_of_year(val).unwrap();
+    assert_eq!(x, 12);
+    assert_eq!(y, u16::MAX);
+}

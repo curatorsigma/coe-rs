@@ -40,6 +40,7 @@
 
 #[cfg(feature = "alloc")]
 extern crate alloc;
+
 #[cfg(feature = "alloc")]
 use alloc::{vec, vec::Vec};
 
@@ -168,6 +169,10 @@ pub use packet_no_alloc::Packet;
 /// This is infallible and always creates enough [Packet]s to pack all [Payload]s into.
 ///
 /// This function is available only on the `alloc` feature flag.
+///
+/// # Panics
+///
+/// On programmer errors, when the maximum size of a [Packet] was not respected.
 #[cfg(feature = "alloc")]
 pub fn packets_from_payloads(payloads: &[Payload]) -> Vec<Packet> {
     payloads
@@ -287,7 +292,7 @@ impl Payload {
         }
     }
 
-    /// Serialize this Payload into the given buffer
+    /// Serialize this [Payload] into the given buffer
     /// the buffer MUST have length == 8
     /// the buffer MUST contain 0s in positions 5..8
     fn serialize_into(&self, buf: &mut [u8]) {
@@ -353,7 +358,7 @@ impl From<DigitalCOEValue> for COEValue {
     }
 }
 impl COEValue {
-    /// Serialize this COEValue into the given buffer
+    /// Serialize this [COEValue] into the given buffer
     /// the buffer MUST have length == 6
     /// the buffer MUST contain 0s in positions 3..6
     fn serialize_into(&self, buf: &mut [u8]) {
@@ -410,7 +415,7 @@ pub fn to_day_of_month(day: u8, month: u8) -> Option<AnalogueCOEValue> {
         return None;
     }
     Some(AnalogueCOEValue::DayOfMonth(
-        (day - 1) as i32 + (month - 1) as i32 * 31,
+        i32::from(day - 1) + i32::from(month - 1) * 31,
     ))
 }
 
@@ -455,6 +460,10 @@ impl std::error::Error for FromDayOfMonthError {}
 /// use coe::{AnalogueCOEValue, from_day_of_month, to_day_of_month};
 /// assert_eq!(from_day_of_month(to_day_of_month(9, 12).unwrap()), Ok((9, 12)));
 /// ```
+///
+/// # Panics
+///
+/// Panics on programmer errors, when out-of-bounds checks for the contained value are wrong.
 // Why is this not a method on AnalogueCOEValue?
 // This conversion only makes sense when we have a DayOfMonth value.
 // Keeping this function separate prevents IDEs from showing this method for all AnalogueCOEValues.
@@ -466,7 +475,7 @@ pub fn from_day_of_month(value: AnalogueCOEValue) -> Result<(u8, u8), FromDayOfM
             } else {
                 Ok((
                     (1 + x % 31).try_into().expect("Modulo 31 yields u8"),
-                    (1 + x / 31).try_into().expect("Length was checked before"),
+                    (1 + x / 31).try_into().expect("x should be smaller then 31 * 12 such that x / 31 is way smaller then i32::MAX"),
                 ))
             }
         }
@@ -492,7 +501,7 @@ pub fn to_month_of_year(month: u8, year: u16) -> Option<AnalogueCOEValue> {
         return None;
     }
     Some(AnalogueCOEValue::MonthOfYear(
-        (month - 1) as i32 + year as i32 * 12,
+        i32::from(month - 1) + i32::from(year) * 12,
     ))
 }
 
@@ -527,8 +536,8 @@ impl std::error::Error for FromMonthOfYearError {}
 /// let val = from_month_of_year(AnalogueCOEValue::MonthOfYear(22231));
 /// assert_eq!(val, Ok((8, 1852)));
 ///
-/// let val = from_month_of_year(AnalogueCOEValue::MonthOfYear(13 * u16::MAX as i32));
-/// assert_eq!(val, Err(FromMonthOfYearError::ValueOutOfBounds(13 * u16::MAX as i32)));
+/// let val = from_month_of_year(AnalogueCOEValue::MonthOfYear(13 * i32::from(u16::MAX)));
+/// assert_eq!(val, Err(FromMonthOfYearError::ValueOutOfBounds(13 * i32::from(u16::MAX))));
 ///
 /// let val = from_month_of_year(AnalogueCOEValue::DegreeKelvin_Tens(123));
 /// assert_eq!(val, Err(FromMonthOfYearError::NotMonthOfYear));
@@ -537,19 +546,23 @@ impl std::error::Error for FromMonthOfYearError {}
 /// use coe::{AnalogueCOEValue, from_month_of_year, to_month_of_year};
 /// assert_eq!(from_month_of_year(to_month_of_year(5, 325).unwrap()), Ok((5, 325)));
 /// ```
+///
+/// # Panics
+///
+/// Panics on programmer errors, when out-of-bounds checks for the contained value are wrong.
 // Why is this not a method on AnalogueCOEValue?
 // This conversion only makes sense when we have a MonthOfYear value.
 // Keeping this function separate prevents IDEs from showing this method for all AnalogueCOEValues.
 pub fn from_month_of_year(value: AnalogueCOEValue) -> Result<(u8, u16), FromMonthOfYearError> {
     match value {
         AnalogueCOEValue::MonthOfYear(x) => {
-            if x < 0 || x > 11 + 12 * u16::MAX as i32 {
-                Err(FromMonthOfYearError::ValueOutOfBounds(x))
-            } else {
+            if (0..=11 + 12 * i32::from(u16::MAX)).contains(&x) {
                 Ok((
-                    (1 + x % 12).try_into().expect("Modulo 12 yields u8"),
-                    (x / 12).try_into().expect("Length was checked before"),
+                    (1 + x % 12).try_into().expect("Modulo 12 has image inside u8"),
+                    (x / 12).try_into().expect("x should be smaller then 11 + 12 * u16::MAX and therefore devisible by 12 into a u16"),
                 ))
+            } else {
+                Err(FromMonthOfYearError::ValueOutOfBounds(x))
             }
         }
         _ => Err(FromMonthOfYearError::NotMonthOfYear),
@@ -655,7 +668,7 @@ pub enum AnalogueCOEValue {
     Lux_Tens(i32) = 75,
 }
 
-/// Given the Format and raw value in bytes, try to create the AnalogueCOEValue
+/// Given the Format and raw value in bytes, try to create the [AnalogueCOEValue]
 impl TryFrom<(&u8, &[u8])> for AnalogueCOEValue {
     type Error = ParseCOEError;
     fn try_from(value: (&u8, &[u8])) -> Result<Self, Self::Error> {
@@ -727,7 +740,7 @@ impl TryFrom<(&u8, &[u8])> for AnalogueCOEValue {
                 let bytes = inner_value.to_le_bytes();
                 let days = bytes[0];
                 let months = bytes[1];
-                let years: u16 = (bytes[2] as u16) + 256 * (bytes[3] as u16);
+                let years: u16 = u16::from(bytes[2]) + (u16::from(bytes[3]) << 8);
                 Ok(Self::Date(days, months, years))
             }
             63 => Ok(Self::Ampere_Tens(inner_value)),
@@ -748,7 +761,7 @@ impl TryFrom<(&u8, &[u8])> for AnalogueCOEValue {
     }
 }
 impl AnalogueCOEValue {
-    /// Serialize this AnalogueCOEValue into the given buffer.
+    /// Serialize this [AnalogueCOEValue] into the given buffer.
     /// The buffer MUST be of length == 5
     fn serialize_into(&self, buf: &mut [u8]) {
         assert_eq!(buf.len(), 5);
@@ -1174,27 +1187,27 @@ impl TryFrom<(&u8, &[u8])> for DigitalCOEValue {
     }
 }
 impl DigitalCOEValue {
-    /// Serialize this DigitalCOEValue into the given buffer.
+    /// Serialize this [DigitalCOEValue] into the given buffer.
     /// The buffer MUST be of length == 5
     /// The buffer MUST contain 0 values in positions 2..5
     fn serialize_into(&self, buf: &mut [u8]) {
-        assert_eq!(buf.len(), 5);
+        assert_eq!(buf.len(), 5, "serialize_into must be passed a buf of len 5");
         match self {
             Self::OnOff(x) => {
                 buf[0] = 43;
-                buf[1] = *x as u8;
+                buf[1] = u8::from(*x);
             }
             Self::YesNo(x) => {
                 buf[0] = 44;
-                buf[1] = *x as u8;
+                buf[1] = u8::from(*x);
             }
             Self::RASMode(x) => {
                 buf[0] = 45;
-                buf[1] = *x as u8;
+                buf[1] = u8::from(*x);
             }
             Self::Mixer(x) => {
                 buf[0] = 47;
-                buf[1] = *x as u8;
+                buf[1] = u8::from(*x);
             }
         };
         // all other bits should be cleared
