@@ -1,8 +1,10 @@
 ![cargo test](https://github.com/curatorsigma/coe-rs/actions/workflows/rust.yml/badge.svg)
 
 # coe-rs
-`coe-rs` is an implementation of the full CAN-over-Ethernet spec by Technische Alternative, written in 100% safe rust with a `no_std` version available.
+`coe-rs` is an implementation of the full CAN-over-Ethernet spec by Technische Alternative, written in 100% safe Rust.
 It allows safe (De-)serialization of COE packets from(into) bytes.
+
+We use `std` by default, but there is a `no_std + alloc` version (with almost the same functionality) and a fully `no_alloc` version available, which depends only on `core`.
 
 # Getting started
 `coe-rs` is as small as possible and only handles (De-)serialization of CoE packets.

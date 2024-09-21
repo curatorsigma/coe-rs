@@ -1,6 +1,6 @@
 [package]
 name = "coe"
-version = "0.2.1"
+version = "0.2.2"
 edition = "2021"
 license = "MIT-0"
 description = "coe is a full implementation of the CoEv2 protocol by Technische Alternative"

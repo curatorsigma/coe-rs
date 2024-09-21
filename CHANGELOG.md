@@ -1,4 +1,5 @@
-# 0.2.1 -> TODO
+# 0.2.1 -> 0.2.2
+- Moved `Display` out of the alloc feature, making it usable in `no_alloc`.
 - Added `is_empy` function and `impl Default` for `Packet`
 
 # 0.2.0 -> 0.2.1
