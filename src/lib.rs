@@ -31,8 +31,8 @@
 //! This makes `coe` depend only on [core], for use in no_alloc / no_std environments.
 //! You can reenable the following feature flags
 //! - `alloc`: This switches the implementation for a Packet from a fixed-size buffer to a Vec,
-//!    which is usually more memory-efficient. It also enables the [packets_from_payloads] function
-//!    and implements Display for Error types.
+//!    which is usually more memory-efficient. It also enables the [packets_from_payloads]
+//!    function.
 //! - Going from `alloc` to `std` implements [std::error::Error] on all Error types.
 //!
 
@@ -85,9 +85,8 @@ pub enum ParseCOEError {
     /// Got a payload frame that is not 8 bytes long.
     PayloadFrameLengthIncorrect(usize),
 }
-#[cfg(feature = "alloc")]
-impl alloc::fmt::Display for ParseCOEError {
-    fn fmt(&self, f: &mut alloc::fmt::Formatter) -> alloc::fmt::Result {
+impl core::fmt::Display for ParseCOEError {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         match self {
             Self::NodeDisallowed(x) => {
                 write!(f, "The Nodenumber must be in 1-62, but {} was supplied.", x)
@@ -204,9 +203,8 @@ impl TryFrom<(u8, u8)> for COEVersion {
         Ok(COEVersion { major: 2, minor: 0 })
     }
 }
-#[cfg(feature = "alloc")]
-impl alloc::fmt::Display for COEVersion {
-    fn fmt(&self, f: &mut alloc::fmt::Formatter) -> alloc::fmt::Result {
+impl core::fmt::Display for COEVersion {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(f, "{}.{}", self.major, self.minor)
     }
 }
@@ -426,9 +424,8 @@ pub enum FromDayOfMonthError {
     /// Note that TA-Hardware always accepts the Value, but assignes useless values here instead.
     ValueOutOfBounds(i32),
 }
-#[cfg(feature = "alloc")]
-impl alloc::fmt::Display for FromDayOfMonthError {
-    fn fmt(&self, f: &mut alloc::fmt::Formatter) -> alloc::fmt::Result {
+impl core::fmt::Display for FromDayOfMonthError {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         match self {
             Self::NotDayOfMonth => write!(f, "Value was not DayOfMonth"),
             Self::ValueOutOfBounds(x) => {
@@ -509,9 +506,8 @@ pub enum FromMonthOfYearError {
     /// Note that TA-Hardware always accepts the Value, but assignes useless values here instead.
     ValueOutOfBounds(i32),
 }
-#[cfg(feature = "alloc")]
-impl alloc::fmt::Display for FromMonthOfYearError {
-    fn fmt(&self, f: &mut alloc::fmt::Formatter) -> alloc::fmt::Result {
+impl core::fmt::Display for FromMonthOfYearError {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         match self {
             Self::NotMonthOfYear => write!(f, "Value was not MonthOfYear"),
             Self::ValueOutOfBounds(x) => {

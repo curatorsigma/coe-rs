@@ -19,7 +19,7 @@ default = ["std"]
 # Implement std::error::Error for all Error types.
 std = ["alloc"]
 
-# Use Vec instead of statically sized buffer in Packet and implement Display for all Error types.
+# Use Vec instead of statically sized buffer in Packet.
 # Also adds the packets_from_payloads function
 alloc = ["serde?/alloc"]
 
